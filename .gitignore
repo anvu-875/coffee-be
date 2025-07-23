@@ -1,0 +1,30 @@
+# Node
+node_modules/
+dist/
+.env
+.env.*
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Prisma
+prisma/dev.db
+prisma/*.sqlite
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Others
+coverage/
+
+# Optional: ignore local database dumps
+*.dump
+*.sql
