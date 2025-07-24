@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 export const login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required.' });
+    return next(new AppError('Email and password are required.', 400));
   }
   // Simple email regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
