@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { login, register, refreshToken } from './controllers/authController';
+import { login, register, refreshToken } from '@/controllers/auth.controller';
 
 const router = Router();
+
+export const authRouteName = 'auth';
 
 /**
  * @openapi
@@ -27,7 +29,7 @@ const router = Router();
  *       401:
  *         description: Invalid credentials
  */
-router.post('/auth/login', login);
+router.post('/login', login);
 
 /**
  * @openapi
@@ -55,7 +57,7 @@ router.post('/auth/login', login);
  *       409:
  *         description: Email already in use
  */
-router.post('/auth/register', register);
+router.post('/register', register);
 
 /**
  * @openapi
@@ -79,6 +81,6 @@ router.post('/auth/register', register);
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/auth/refresh', refreshToken);
+router.post('/refresh', refreshToken);
 
 export default router;

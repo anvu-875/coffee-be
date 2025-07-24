@@ -1,3 +1,41 @@
+// ENUMS
+enum CoffeeSpecies {
+  ARABICA
+  ROBUSTA
+  LIBERICA
+  EXCELSA
+}
+
+enum RoastLevel {
+  LIGHT
+  MEDIUM
+  DARK
+}
+
+enum ProcessingMethod {
+  WASHED
+  NATURAL
+  HONEY
+  DECAF
+}
+
+enum BrewingMethod {
+  ESPRESSO
+  DRIP
+  FRENCH_PRESS
+  COLD_BREW
+  MOKA_POT
+  AEROPRESS
+  TURKISH
+}
+
+enum Certification {
+  ORGANIC
+  FAIR_TRADE
+  RAINFOREST_ALLIANCE
+  DIRECT_TRADE
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,7 +46,7 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   email     String   @unique
   password  String
   name      String
@@ -17,21 +55,62 @@ model User {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id             String           @id @default(uuid())
+  name           String
+  description    String?
+  price          Float
+  species        CoffeeSpecies
+  roastLevel     RoastLevel
+  processing     ProcessingMethod
+  certifications Certification[]
+  originId       String
+  origin         Origin           @relation(fields: [originId], references: [id])
+  grindType      String? // e.g. whole bean, ground, capsule
+  brewing        BrewingMethod[]
+  orders         Order[]
+  createdAt      DateTime         @default(now())
+}
+
+model Equipment {
+  id          String   @id @default(uuid())
   name        String
   description String?
+  type        String // e.g. grinder, espresso machine
   price       Float
-  orders      Order[]
   createdAt   DateTime @default(now())
 }
 
+model Accessory {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  type        String // e.g. cup, mug, tamper
+  price       Float
+  createdAt   DateTime @default(now())
+}
+
+model Additive {
+  id        String   @id @default(uuid())
+  name      String
+  type      String // e.g. sugar, syrup, milk
+  createdAt DateTime @default(now())
+}
+
+model Origin {
+  id       String    @id @default(uuid())
+  country  String
+  region   String?
+  farm     String?
+  products Product[]
+}
+
 model Order {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id])
-  userId    Int
+  userId    String
   product   Product  @relation(fields: [productId], references: [id])
-  productId Int
-  quantity  Int      @default(1)
+  productId String
+  quantity  Int      @default(0)
   status    String   @default("pending")
   createdAt DateTime @default(now())
 }

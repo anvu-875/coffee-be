@@ -3,6 +3,7 @@
 This is a Node.js backend project for a coffee shop, built with TypeScript, Express, PostgreSQL, and Prisma ORM.
 
 ## Features
+
 - User authentication (JWT)
 - Product (coffee) management
 - Order management
@@ -25,13 +26,16 @@ This is a Node.js backend project for a coffee shop, built with TypeScript, Expr
    ```
 
 ## Scripts
+
 - `npm run dev` — Start in development mode
 - `npm run build` — Build for production
 - `npm start` — Start in production
 
 ## Project Structure
+
 - `src/` — Source code
 - `prisma/` — Prisma schema and migrations
 
 ## License
+
 MIT

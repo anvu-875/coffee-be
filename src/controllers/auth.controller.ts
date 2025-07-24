@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import prisma from '../prisma';
-import { generateAccessToken, generateRefreshToken, hashPassword, comparePassword } from '../auth';
+import prisma from '@/utils/prisma';
+import { generateAccessToken, generateRefreshToken, hashPassword, comparePassword } from '../utils/auth';
+import catchAsync from '@/utils/catch-async';
 
-export async function login(req: Request, res: Response) {
+export const login = catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required.' });
@@ -26,9 +27,9 @@ export async function login(req: Request, res: Response) {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
   return res.json({ accessToken, refreshToken, user: { id: user.id, email: user.email, name: user.name } });
-}
+});
 
-export async function register(req: Request, res: Response) {
+export const register = catchAsync(async (req: Request, res: Response) => {
   const { email, password, name } = req.body;
   if (!email || !password || !name) {
     return res.status(400).json({ message: 'Email, password, and name are required.' });
@@ -50,9 +51,9 @@ export async function register(req: Request, res: Response) {
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
   return res.status(201).json({ accessToken, refreshToken, user: { id: user.id, email: user.email, name: user.name } });
-}
+});
 
-export async function refreshToken(req: Request, res: Response) {
+export const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
   if (!refreshToken) {
     return res.status(400).json({ message: 'Refresh token required.' });
@@ -68,4 +69,4 @@ export async function refreshToken(req: Request, res: Response) {
   } catch (e) {
     return res.status(401).json({ message: 'Invalid refresh token.' });
   }
-}
+});
