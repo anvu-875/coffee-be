@@ -1,41 +1,3 @@
-// ENUMS
-enum CoffeeSpecies {
-  ARABICA
-  ROBUSTA
-  LIBERICA
-  EXCELSA
-}
-
-enum RoastLevel {
-  LIGHT
-  MEDIUM
-  DARK
-}
-
-enum ProcessingMethod {
-  WASHED
-  NATURAL
-  HONEY
-  DECAF
-}
-
-enum BrewingMethod {
-  ESPRESSO
-  DRIP
-  FRENCH_PRESS
-  COLD_BREW
-  MOKA_POT
-  AEROPRESS
-  TURKISH
-}
-
-enum Certification {
-  ORGANIC
-  FAIR_TRADE
-  RAINFOREST_ALLIANCE
-  DIRECT_TRADE
-}
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -46,71 +8,171 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  orders    Order[]
-  createdAt DateTime @default(now())
+  id            String        @id @default(uuid())
+  email         String        @unique
+  passwordHash  String
+  name          String
+  phone         String?
+  role          Role          @default(USER)
+  orders        Order[]
+  reviews       Review[]
+  cartItems     CartItem[]
+  addresses     Address[]
+  wishlists     Wishlist[]
+  loyaltyPoints LoyaltyPoint?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
-model Product {
-  id             String           @id @default(uuid())
-  name           String
-  description    String?
-  price          Float
-  species        CoffeeSpecies
-  roastLevel     RoastLevel
-  processing     ProcessingMethod
-  certifications Certification[]
-  originId       String
-  origin         Origin           @relation(fields: [originId], references: [id])
-  grindType      String? // e.g. whole bean, ground, capsule
-  brewing        BrewingMethod[]
-  orders         Order[]
-  createdAt      DateTime         @default(now())
+enum Role {
+  USER
+  ADMIN
 }
 
-model Equipment {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  type        String // e.g. grinder, espresso machine
-  price       Float
-  createdAt   DateTime @default(now())
-}
-
-model Accessory {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  type        String // e.g. cup, mug, tamper
-  price       Float
-  createdAt   DateTime @default(now())
-}
-
-model Additive {
-  id        String   @id @default(uuid())
-  name      String
-  type      String // e.g. sugar, syrup, milk
-  createdAt DateTime @default(now())
-}
-
-model Origin {
-  id       String    @id @default(uuid())
-  country  String
-  region   String?
-  farm     String?
+model Category {
+  id       String     @id @default(uuid())
+  name     String
+  slug     String     @unique
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
   products Product[]
 }
 
+model Product {
+  id          String           @id @default(uuid())
+  name        String
+  slug        String           @unique
+  description String
+  imageUrl    String[]
+  categoryId  String
+  category    Category         @relation(fields: [categoryId], references: [id])
+  variants    ProductVariant[]
+  reviews     Review[]
+  status      ProductStatus    @default(ACTIVE)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  Wishlist    Wishlist[]
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model ProductVariant {
+  id            String      @id @default(uuid())
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id])
+  variantName   String
+  price         Float
+  discountPrice Float?
+  discountStart DateTime?
+  discountEnd   DateTime?
+  stock         Int
+  OrderItem     OrderItem[]
+  CartItem      CartItem[]
+}
+
 model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  status      OrderStatus @default(PENDING)
+  totalAmount Float
+  couponCode  String?
+  coupon      Coupon?     @relation(fields: [couponCode], references: [code])
+  addressId   String
+  address     Address     @relation(fields: [addressId], references: [id])
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model OrderItem {
+  id               String         @id @default(uuid())
+  orderId          String
+  order            Order          @relation(fields: [orderId], references: [id])
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantity         Int
+  unitPrice        Float
+}
+
+model Review {
   id        String   @id @default(uuid())
-  user      User     @relation(fields: [userId], references: [id])
   userId    String
-  product   Product  @relation(fields: [productId], references: [id])
   productId String
-  quantity  Int      @default(0)
-  status    String   @default("pending")
+  rating    Int
+  comment   String?
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([userId, productId])
+}
+
+model Address {
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  fullName  String
+  phone     String
+  street    String
+  city      String
+  province  String
+  isDefault Boolean @default(false)
+  Order     Order[]
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model CartItem {
+  id               String         @id @default(uuid())
+  userId           String
+  productVariantId String
+  quantity         Int
+  user             User           @relation(fields: [userId], references: [id])
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+}
+
+model Coupon {
+  id         String     @id @default(uuid())
+  code       String     @unique
+  type       CouponType
+  value      Float
+  expiresAt  DateTime
+  usageLimit Int?
+  usedCount  Int        @default(0)
+  isActive   Boolean    @default(true)
+  isDeleted  Boolean    @default(false)
+  Order      Order[]
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model LoyaltyPoint {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  points    Int      @default(0)
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 }
