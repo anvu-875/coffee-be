@@ -1,88 +1,55 @@
 import { Request, Response, NextFunction } from 'express';
-import AppError from '@/utils/app-error';
+import HttpError from '@/utils/http-error';
+import { Prisma } from '@prisma/client';
 
-const devError = (err: AppError, res: Response) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack
-  });
-};
+/**
+ * Convert Prisma P2002 error to HttpError with detail for multiple fields
+ */
+function handlePrismaKnownError(err: Prisma.PrismaClientKnownRequestError): HttpError {
+  if (err.code === 'P2002') {
+    // target may be array of fields or single string
+    const targets = err.meta?.target;
+    let errors: Record<string, string[]> = {};
 
-const prodError = (err: AppError, res: Response) => {
-  // operational errors are trusted, so we send a message to the client
-  if (err.isOperational) {
-    res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message,
-    });
+    if (Array.isArray(targets)) {
+      targets.forEach((field) => {
+        errors[String(field)] = ['Duplicate value'];
+      });
+    } else if (typeof targets === 'string') {
+      errors[String(targets)] = ['Duplicate value'];
+    } else {
+      // fallback
+      errors = { unknown: ['Duplicate value'] };
+    }
 
-    // programming or other unknown errors: don't leak error details
-  } else {
-    // 1) log the error
-    console.error('ERROR 💥', err);
-
-    // 2) send a generic message
-    res.status(500).json({
-      status: 'error',
-      message: 'Something went very wrong! (this is a non-operational error)',
-    });
+    return new HttpError(`Duplicate value on field(s): ${Object.keys(errors).join(', ')}`, 409, errors);
   }
-};
 
-const handleCastErrorDB = (err: any) => {
-  const message = `Invalid ${err.path}: ${err.value}`;
-  // 400 for bad request
-  return new AppError(message, 400);
-};
-
-const handleDuplicateFieldsDB = (err: any) => {
-  const value = err.keyValue.name;
-  const message = `Duplicate field value: ${value}. Please use another value!`;
-  // 400 for bad request
-  return new AppError(message, 400);
-};
-
-const handleValidationErrorDB = (err: any) => {
-  const validationErrors = Object.values(err.errors).map((el: any) => el.message);
-  const message = `Invalid input data. ${validationErrors.join('. ')}`;
-  // 400 for bad request
-  return new AppError(message, 400);
-};
-
-const handleJWTError = () => new AppError('Invalid token. Please log in again!', 401);
-
-const handleJWTExpiredError = () => new AppError('Your token has expired! Please log in again!', 401);
-
-const errorHandler = (err: AppError, req: Request, res: Response, next: NextFunction) => {
-  (err.statusCode as number) = err.statusCode || 500;
-  (err.status as string) = err.status || 'error';
-
-  // in development, we want to send the error stack
-  if (process.env.NODE_ENV === 'development') {
-    devError(err, res);
-  } else if (process.env.NODE_ENV === 'production') {
-    // hard copy of the error object
-    let error: AppError = { ...err };
-    // the condition must be err.name, not error.name
-    // because the copy of err does not contain the name property
-    if (err.name === 'CastError') {
-      error = handleCastErrorDB(error);
-    } else if (err.name === 'ValidationError') {
-      error = handleValidationErrorDB(error);
-    }
-    if (err.message.startsWith('E11000')) {
-      error = handleDuplicateFieldsDB(error);
-    }
-    if (err.name === 'JsonWebTokenError') {
-      error = handleJWTError();
-    }
-    if (err.name === 'TokenExpiredError') {
-      error = handleJWTExpiredError();
-    }
-    prodError(error, res);
+  if (err.code === 'P2025') {
+    return new HttpError('Resource not found.', 404);
   }
+
+  // default fallback
+  return new HttpError(err.message, 400);
+}
+
+/**
+ * Error handling middleware
+ */
+const errorHandler = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
+  // Convert Prisma errors if not in development
+  if (process.env.NODE_ENV !== 'development') {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      err = handlePrismaKnownError(err);
+    } else if (err instanceof Prisma.PrismaClientValidationError) {
+      err = new HttpError('Invalid query or input data.', 400);
+    } else if (err instanceof Prisma.PrismaClientInitializationError) {
+      err = new HttpError('Database connection failed.', 500);
+    }
+  }
+
+  res.status(err.statusCode).json(err.toJSON());
+
   next();
 };
 
