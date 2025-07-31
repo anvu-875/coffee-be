@@ -1,5 +1,5 @@
-import { ZodObject, treeifyError } from 'zod';
-import { Request, Response, NextFunction } from 'express';
+import { type ZodObject, treeifyError } from 'zod';
+import type { Request, Response, NextFunction } from 'express';
 
 export const validateBody = (schema: ZodObject) => (req: Request, res: Response, next: NextFunction) => {
   const result = schema.safeParse(req.body);

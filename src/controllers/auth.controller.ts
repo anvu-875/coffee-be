@@ -7,7 +7,6 @@ import userService from '@/services/user.service';
 
 export const login = catchAsync(async (req, res, next) => {
   if (!req.body?.email || !req.body?.password) {
-    // @ts-ignore
     return next(new HttpError('Email and password are required', 400));
   }
   const { email, password } = req.body;

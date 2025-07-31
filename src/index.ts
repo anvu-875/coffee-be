@@ -1,5 +1,3 @@
-// Load environment variables
-import env from './utils/env';
 import express from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
@@ -8,10 +6,12 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
+import env from './utils/env';
 import path from './utils/path';
 import HttpError from './utils/http-error';
 import globalErrorHandler from './controllers/error.controller';
 import authRouter, { authRouteName } from './routes/auth.route';
+import prisma, { connectWithRetry } from './db/prisma';
 
 const app = express();
 
@@ -24,7 +24,6 @@ app.use(cors());
 if (env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
-console.log('Env currently running on: ' + env.NODE_ENV);
 
 // limit the number of requests from the same IP
 // in this case, 100 requests per hour
@@ -79,21 +78,55 @@ const swaggerOptions = {
 // generate the API document web page
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 app.get('/', (_req, res) => {
-  res.send('Coffee Shop Backend API');
+  res.redirect('/api/docs');
 });
 
 // 2) ROUTES
 app.use(`/api/${authRouteName}`, authRouter);
 
 // 3) ERROR HANDLING
-app.all(/.*/, (req, res, next) => {
+app.all(/.*/, (req, _res, next) => {
   next(new HttpError(`Can't find ${req.originalUrl}`, 404));
 });
 
 app.use(globalErrorHandler);
 
-const PORT = env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Connect to the database
+const PORT = env.PORT ?? 3000;
+async function main() {
+  const establishApp = () => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT} (http://localhost:${PORT})`);
+    });
+  };
+  console.log('Env currently running on: ' + env.NODE_ENV);
+  try {
+    console.log('Checking database connection...');
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('Database connection is healthy');
+    establishApp();
+  } catch (e) {
+    try {
+      console.log('Waiting for database connection...');
+      await connectWithRetry();
+      console.log('Connected to the database');
+      establishApp();
+    } catch (error) {
+      console.error('Error connecting to the database:', error);
+      process.exit(1);
+    }
+  }
+  // Clean shutdown
+  process.on('SIGINT', async () => {
+    console.log('SIGINT received – disconnecting Prisma');
+    await prisma.$disconnect();
+    process.exit(0);
+  });
+}
+
+main();
+
+export default app;
+export { app, PORT }; // Export app and PORT for testing or other purposes

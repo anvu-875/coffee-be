@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import HttpError from '@/utils/http-error';
 import { Prisma } from '@prisma/client';
 
@@ -36,7 +36,7 @@ function handlePrismaKnownError(err: Prisma.PrismaClientKnownRequestError): Http
 /**
  * Error handling middleware
  */
-const errorHandler = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
+const errorHandler = (err: HttpError, _req: Request, res: Response, next: NextFunction) => {
   // Convert Prisma errors if not in development
   if (process.env.NODE_ENV !== 'development') {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {

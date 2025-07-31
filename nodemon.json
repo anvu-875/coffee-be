@@ -1,0 +1,5 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "exec": "node esbuild.mjs && node --inspect=9229 --enable-source-maps dist/server.js"
+}
