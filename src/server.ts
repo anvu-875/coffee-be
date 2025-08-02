@@ -1,7 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import swaggerUi from 'swagger-ui-express';
-import swaggerJsdoc from 'swagger-jsdoc';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
@@ -12,6 +10,8 @@ import HttpError from './utils/http-error';
 import globalErrorHandler from './controllers/error.controller';
 import authRouter, { authRouteName } from './routes/auth.route';
 import prisma, { connectWithRetry } from './db/prisma';
+import logger from './utils/logger';
+import swaggerDocs from './swagger';
 
 const app = express();
 
@@ -20,10 +20,7 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 
-// development logging
-if (env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-}
+app.use(morgan('common')); // log requests to the console
 
 // limit the number of requests from the same IP
 // in this case, 100 requests per hour
@@ -58,30 +55,7 @@ app.use(
 app.use(express.static(path.publicDir));
 
 // middleware to define API documentation
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Coffee Shop API',
-      version: '1.0.0',
-      description: 'API documentation for the Coffee Shop backend',
-    },
-    servers: [
-      {
-        url: 'http://localhost:' + (env.PORT || 3000) + '/api',
-      },
-    ],
-  },
-  apis: ['./src/routes/*.ts'],
-};
-
-// generate the API document web page
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-app.get('/', (_req, res) => {
-  res.redirect('/api/docs');
-});
+swaggerDocs(app);
 
 // 2) ROUTES
 app.use(`/api/${authRouteName}`, authRouter);
@@ -98,23 +72,23 @@ const PORT = env.PORT ?? 3000;
 async function main() {
   const establishApp = () => {
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT} (http://localhost:${PORT})`);
+      logger.info(`Server is running at http://localhost:${PORT}`);
     });
   };
-  console.log('Env currently running on: ' + env.NODE_ENV);
+  logger.info('Env currently running on: ' + env.NODE_ENV);
   try {
-    console.log('Checking database connection...');
+    logger.info('Checking database connection...');
     await prisma.$queryRaw`SELECT 1`;
-    console.log('Database connection is healthy');
+    logger.info('Database connection is healthy');
     establishApp();
   } catch (e) {
     try {
-      console.log('Waiting for database connection...');
+      logger.info('Waiting for database connection...');
       await connectWithRetry();
-      console.log('Connected to the database');
+      logger.info('Connected to the database');
       establishApp();
     } catch (error) {
-      console.error('Error connecting to the database:', error);
+      logger.info('Error connecting to the database:', error);
       process.exit(1);
     }
   }

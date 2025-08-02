@@ -5,26 +5,20 @@ import { tsPathsPlugin } from '@awalgawe/esbuild-typescript-paths-plugin';
  * @type {import('esbuild').BuildOptions}
  */
 const config = {
-  entryPoints: ['src/index.ts'],
+  entryPoints: ['src/server.ts'],
   bundle: true,
   platform: 'node',
-  format: 'cjs',
-  outfile: 'dist/server.js',
+  target: 'es2023',
+  outfile: 'dist/index.js',
   sourcemap: true,
   tsconfig: 'tsconfig.json',
-  external: ['express', 'swagger-ui-express', 'swagger-jsdoc', '@prisma/client'],
+  external: ['express', 'swagger-ui-express', 'swagger-jsdoc', '@prisma/client', 'swagger-docs.json'],
   plugins: [tsPathsPlugin()],
 };
 
 async function run() {
-  if (process.argv.includes('--watch')) {
-    const ctx = await esbuild.context(config);
-    await ctx.watch();
-    console.log('esbuild: watching and rebuilding on TS changes...');
-  } else {
-    await esbuild.build(config);
-    console.log('esbuild: build completed');
-  }
+  await esbuild.build(config);
+  console.log('✅ esbuild: build completed');
 }
 
 run().catch((err) => {

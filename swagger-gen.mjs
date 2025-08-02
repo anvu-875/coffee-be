@@ -1,0 +1,27 @@
+import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
+import swaggerJSDoc from 'swagger-jsdoc';
+
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Coffee Shop API',
+      version: '1.0.0',
+      description: 'API documentation for the Coffee Shop backend',
+    },
+    servers: [
+      {
+        url: 'http://localhost:' + (process.env.PORT || 3000) + '/api',
+      },
+    ],
+  },
+  apis: ['src/routes/**/*.ts'],
+};
+
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+
+fs.writeFileSync(path.resolve(process.cwd(), 'swagger-docs.json'), JSON.stringify(swaggerSpec, null, 2));
+
+console.log('✅ swagger-docs.json generated');

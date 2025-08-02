@@ -1,4 +1,4 @@
-import prisma from '@/db/prisma.js';
+import prisma from '@/db/prisma';
 
 class UserService {
   private static instance: UserService | null = null;
