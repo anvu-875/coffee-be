@@ -12,8 +12,14 @@ const config = {
   outfile: 'dist/index.js',
   sourcemap: true,
   tsconfig: 'tsconfig.json',
-  external: ['express', 'swagger-ui-express', 'swagger-jsdoc', '@prisma/client', 'swagger-docs.json'],
-  plugins: [tsPathsPlugin()],
+  external: [
+    'express',
+    'swagger-ui-express',
+    'swagger-jsdoc',
+    '@prisma/client',
+    'swagger-docs.json'
+  ],
+  plugins: [tsPathsPlugin()]
 };
 
 async function run() {

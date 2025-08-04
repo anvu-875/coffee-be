@@ -1,0 +1,5 @@
+node_modules/
+dist/
+public/
+swagger-docs.json
+package-lock.json

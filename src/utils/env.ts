@@ -10,10 +10,10 @@ const envSchema = z.object({
     .string()
     .transform(Number)
     .refine((val) => val > 0, {
-      message: 'PORT must be a positive number',
+      message: 'PORT must be a positive number'
     }),
   DATABASE_URL: z.url(),
-  JWT_SECRET: z.string().min(32),
+  JWT_SECRET: z.string().min(32)
 });
 
 const env = envSchema.parse(process.env);

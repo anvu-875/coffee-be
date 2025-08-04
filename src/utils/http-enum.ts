@@ -9,7 +9,7 @@ export enum HttpMethod {
   CONNECT = 'CONNECT',
   OPTIONS = 'OPTIONS',
   TRACE = 'TRACE',
-  PATCH = 'PATCH',
+  PATCH = 'PATCH'
 }
 
 /** Informational (1xx) responses */
@@ -18,7 +18,7 @@ export enum Informational {
   SWITCHING_PROTOCOLS = 101,
   PROCESSING = 102,
   EARLY_HINTS = 103,
-  UPLOAD_RESUMPTION_SUPPORTED = 104, // IANA-registered Nov 2024 :contentReference[oaicite:7]{index=7}
+  UPLOAD_RESUMPTION_SUPPORTED = 104 // IANA-registered Nov 2024 :contentReference[oaicite:7]{index=7}
 }
 
 /** Successful (2xx) responses */
@@ -33,7 +33,7 @@ export enum Success {
   MULTI_STATUS = 207,
   ALREADY_REPORTED = 208,
   THIS_IS_FINE = 218, // Apache // Non-standard // Just some fun for short dev life
-  IM_USED = 226,
+  IM_USED = 226
 }
 
 /** Redirection (3xx) responses */
@@ -46,7 +46,7 @@ export enum Redirection {
   USE_PROXY = 305, // Deprecated
   SWITCH_PROXY = 306, // Unused / reserved :contentReference[oaicite:8]{index=8}
   TEMPORARY_REDIRECT = 307,
-  PERMANENT_REDIRECT = 308,
+  PERMANENT_REDIRECT = 308
 }
 
 /** Client Error (4xx) responses */
@@ -80,7 +80,7 @@ export enum ClientError {
   PRECONDITION_REQUIRED = 428,
   TOO_MANY_REQUESTS = 429,
   REQUEST_HEADER_FIELDS_TOO_LARGE = 431,
-  UNAVAILABLE_FOR_LEGAL_REASONS = 451,
+  UNAVAILABLE_FOR_LEGAL_REASONS = 451
 }
 
 /** Server Error (5xx) responses */
@@ -95,7 +95,7 @@ export enum ServerError {
   INSUFFICIENT_STORAGE = 507,
   LOOP_DETECTED = 508,
   NOT_EXTENDED = 510, // Obsolete (historic) :contentReference[oaicite:9]{index=9}
-  NETWORK_AUTHENTICATION_REQUIRED = 511,
+  NETWORK_AUTHENTICATION_REQUIRED = 511
 }
 
 /**
@@ -106,7 +106,7 @@ export const StatusCodes = {
   Success,
   Redirection,
   ClientError,
-  ServerError,
+  ServerError
 };
 
 // Combined map for lookup
@@ -171,7 +171,8 @@ const statusTextMap: Record<number, string> = {
   [ClientError.UPGRADE_REQUIRED]: 'Upgrade Required',
   [ClientError.PRECONDITION_REQUIRED]: 'Precondition Required',
   [ClientError.TOO_MANY_REQUESTS]: 'Too Many Requests',
-  [ClientError.REQUEST_HEADER_FIELDS_TOO_LARGE]: 'Request Header Fields Too Large',
+  [ClientError.REQUEST_HEADER_FIELDS_TOO_LARGE]:
+    'Request Header Fields Too Large',
   [ClientError.UNAVAILABLE_FOR_LEGAL_REASONS]: 'Unavailable For Legal Reasons',
 
   // 5xx
@@ -185,7 +186,8 @@ const statusTextMap: Record<number, string> = {
   [ServerError.INSUFFICIENT_STORAGE]: 'Insufficient Storage',
   [ServerError.LOOP_DETECTED]: 'Loop Detected',
   [ServerError.NOT_EXTENDED]: 'Not Extended (Obsolete)',
-  [ServerError.NETWORK_AUTHENTICATION_REQUIRED]: 'Network Authentication Required',
+  [ServerError.NETWORK_AUTHENTICATION_REQUIRED]:
+    'Network Authentication Required'
 };
 
 /**
@@ -196,7 +198,9 @@ export function httpStatusTextByCode(code: number | string): string {
   const num = typeof code === 'string' ? parseInt(code, 10) : code;
   const text = statusTextMap[num];
   if (!text) {
-    console.log(`${'\x1b[1m'}${'\x1b[31m'}⚠️  Unknown HTTP status code: ${code}${'\x1b[0m'}`);
+    console.log(
+      `${'\x1b[1m'}${'\x1b[31m'}⚠️  Unknown HTTP status code: ${code}${'\x1b[0m'}`
+    );
     return 'Unknown Status';
   }
   return text;

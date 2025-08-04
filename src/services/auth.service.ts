@@ -1,31 +1,34 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import type { User } from '@prisma/client';
+import env from '@/utils/env';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+const JWT_SECRET = env.JWT_SECRET;
 const JWT_EXPIRES_IN = '15m';
 const REFRESH_EXPIRES_IN = '7d';
 
 class AuthService {
   private static instance: AuthService | null = null;
 
-  private constructor() {}
-
   static getInstance() {
-    if (AuthService.instance === null) {
-      AuthService.instance = new AuthService();
-    }
+    AuthService.instance ??= new AuthService();
     return AuthService.instance;
   }
 
   generateAccessToken(user: User) {
-    return jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    return jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN
+    });
   }
 
   generateRefreshToken(user: User) {
-    return jwt.sign({ userId: user.id, email: user.email, type: 'refresh' }, JWT_SECRET, {
-      expiresIn: REFRESH_EXPIRES_IN,
-    });
+    return jwt.sign(
+      { userId: user.id, email: user.email, type: 'refresh' },
+      JWT_SECRET,
+      {
+        expiresIn: REFRESH_EXPIRES_IN
+      }
+    );
   }
 
   verifyToken(token: string) {

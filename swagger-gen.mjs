@@ -9,19 +9,22 @@ const swaggerOptions = {
     info: {
       title: 'Coffee Shop API',
       version: '1.0.0',
-      description: 'API documentation for the Coffee Shop backend',
+      description: 'API documentation for the Coffee Shop backend'
     },
     servers: [
       {
-        url: 'http://localhost:' + (process.env.PORT || 3000) + '/api',
-      },
-    ],
+        url: 'http://localhost:' + (process.env.PORT || 3000) + '/api'
+      }
+    ]
   },
-  apis: ['src/routes/**/*.ts'],
+  apis: ['src/routes/**/*.ts', 'src/schemas/**/*.ts']
 };
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
-fs.writeFileSync(path.resolve(process.cwd(), 'swagger-docs.json'), JSON.stringify(swaggerSpec, null, 2));
+fs.writeFileSync(
+  path.resolve(process.cwd(), 'swagger-docs.json'),
+  JSON.stringify(swaggerSpec, null, 2)
+);
 
 console.log('✅ swagger-docs.json generated');

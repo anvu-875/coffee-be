@@ -6,14 +6,23 @@ import { ClientError, ServerError, httpStatusTextByCode } from './http-enum';
  * Automatically inferred from StatusCodes enum
  */
 const ALLOWED_ERROR_CODES = [
-  ...Object.values(ClientError).filter((code): code is number => typeof code === 'number'),
-  ...Object.values(ServerError).filter((code): code is number => typeof code === 'number'),
+  ...Object.values(ClientError).filter(
+    (code): code is number => typeof code === 'number'
+  ),
+  ...Object.values(ServerError).filter(
+    (code): code is number => typeof code === 'number'
+  )
 ];
 
 /**
  * A flexible type to represent detailed error info
  */
-type ErrorDetail = Record<string | number | symbol, unknown> | Array<unknown> | string | number | null;
+type ErrorDetail =
+  | Record<string | number | symbol, unknown>
+  | unknown[]
+  | string
+  | number
+  | null;
 
 /**
  * A type to force status to be 4xx or 5xx
@@ -33,7 +42,7 @@ class HttpError extends Error {
     message: string,
     statusCode: ErrorStatusCode,
     errorDetail: ErrorDetail = null,
-    isOperational: boolean = true
+    isOperational = true
   ) {
     // check validation of status code
     if (!ALLOWED_ERROR_CODES.includes(statusCode)) {
@@ -65,13 +74,13 @@ class HttpError extends Error {
         msg: this.message,
         error: this.errorDetail,
         stack: this.stack,
-        isOperational: this.isOperational,
+        isOperational: this.isOperational
       };
     } else {
       // production
       return {
         status: this.statusCode,
-        msg: this.message,
+        msg: this.message
       };
     }
   }

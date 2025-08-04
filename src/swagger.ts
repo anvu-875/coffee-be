@@ -11,7 +11,9 @@ function loadSwaggerSpec() {
     logger.info('[Swagger] Using prebuilt swagger-docs.json');
     return JSON.parse(fs.readFileSync(swaggerJsonPath, 'utf-8')) as object;
   }
-  throw new Error('Swagger documentation file not found. Please generate it first.');
+  throw new Error(
+    'Swagger documentation file not found. Please generate it first.'
+  );
 }
 
 const swaggerSpec = loadSwaggerSpec();

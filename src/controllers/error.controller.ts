@@ -5,10 +5,12 @@ import { Prisma } from '@prisma/client';
 /**
  * Convert Prisma P2002 error to HttpError with detail for multiple fields
  */
-function handlePrismaKnownError(err: Prisma.PrismaClientKnownRequestError): HttpError {
+function handlePrismaKnownError(
+  err: Prisma.PrismaClientKnownRequestError
+): HttpError {
   if (err.code === 'P2002') {
     // target may be array of fields or single string
-    const targets = err.meta?.target;
+    const targets = err.meta?.target as string | string[];
     let errors: Record<string, string[]> = {};
 
     if (Array.isArray(targets)) {
@@ -22,7 +24,11 @@ function handlePrismaKnownError(err: Prisma.PrismaClientKnownRequestError): Http
       errors = { unknown: ['Duplicate value'] };
     }
 
-    return new HttpError(`Duplicate value on field(s): ${Object.keys(errors).join(', ')}`, 409, errors);
+    return new HttpError(
+      `Duplicate value on field(s): ${Object.keys(errors).join(', ')}`,
+      409,
+      errors
+    );
   }
 
   if (err.code === 'P2025') {
@@ -36,7 +42,12 @@ function handlePrismaKnownError(err: Prisma.PrismaClientKnownRequestError): Http
 /**
  * Error handling middleware
  */
-const errorHandler = (err: HttpError, _req: Request, res: Response, next: NextFunction) => {
+const errorHandler = (
+  err: HttpError,
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // Convert Prisma errors if not in development
   if (process.env.NODE_ENV !== 'development') {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {

@@ -28,7 +28,11 @@ export const login = catchAsync(async (req, res, next) => {
   }
   const accessToken = authService.generateAccessToken(user);
   const refreshToken = authService.generateRefreshToken(user);
-  return res.json({ accessToken, refreshToken, user: { id: user.id, email: user.email, name: user.name } });
+  return res.json({
+    accessToken,
+    refreshToken,
+    user: { id: user.id, email: user.email, name: user.name }
+  });
 });
 
 export const register = catchAsync(async (req, res, next) => {
@@ -49,10 +53,16 @@ export const register = catchAsync(async (req, res, next) => {
     return next(new HttpError('Email already in use.', 409));
   }
   const hashed = await authService.hashPassword(password);
-  const user = await prisma.user.create({ data: { email, passwordHash: hashed, name } });
+  const user = await prisma.user.create({
+    data: { email, passwordHash: hashed, name }
+  });
   const accessToken = authService.generateAccessToken(user);
   const refreshToken = authService.generateRefreshToken(user);
-  return res.status(201).json({ accessToken, refreshToken, user: { id: user.id, email: user.email, name: user.name } });
+  return res.status(201).json({
+    accessToken,
+    refreshToken,
+    user: { id: user.id, email: user.email, name: user.name }
+  });
 });
 
 export const refreshToken = catchAsync(async (req, res, next) => {
@@ -61,14 +71,23 @@ export const refreshToken = catchAsync(async (req, res, next) => {
     return next(new HttpError('Refresh token required.', 400));
   }
   try {
-    const payload = jwt.verify(refreshToken, process.env.JWT_SECRET || 'secret') as { type: string; userId: string };
-    if (payload.type !== 'refresh') return next(new HttpError('Invalid token type', 400));
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const payload = jwt.verify(
+      refreshToken,
+      process.env.JWT_SECRET || 'secret'
+    ) as { type: string; userId: string };
+    if (payload.type !== 'refresh')
+      return next(new HttpError('Invalid token type', 400));
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId }
+    });
     if (!user) return next(new HttpError('User not found.', 401));
     const newAccessToken = authService.generateAccessToken(user);
     const newRefreshToken = authService.generateRefreshToken(user);
-    return res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-  } catch (e) {
+    return res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
+  } catch {
     return next(new HttpError('Invalid refresh token.', 400));
   }
 });

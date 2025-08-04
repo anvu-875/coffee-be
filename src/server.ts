@@ -30,7 +30,7 @@ const maxRequest = 100;
 const limiter = rateLimit({
   max: maxRequest,
   windowMs: timeWindow,
-  message: 'Too many requests from this IP, please try again in an hour!',
+  message: 'Too many requests from this IP, please try again in an hour!'
 });
 
 // apply the limiter to all routes that start with /api
@@ -47,7 +47,7 @@ const whitelisted: string[] = [];
 // hpp - html param pollution will remove the duplicate parameter
 app.use(
   hpp({
-    whitelist: whitelisted,
+    whitelist: whitelisted
   })
 );
 
@@ -68,7 +68,7 @@ app.all(/.*/, (req, _res, next) => {
 app.use(globalErrorHandler);
 
 // Connect to the database
-const PORT = env.PORT ?? 3000;
+const PORT = env.PORT;
 async function main() {
   const establishApp = () => {
     app.listen(PORT, () => {
@@ -81,7 +81,7 @@ async function main() {
     await prisma.$queryRaw`SELECT 1`;
     logger.info('Database connection is healthy');
     establishApp();
-  } catch (e) {
+  } catch {
     try {
       logger.info('Waiting for database connection...');
       await connectWithRetry();

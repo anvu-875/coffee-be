@@ -3,8 +3,6 @@ import prisma from '@/db/prisma';
 class UserService {
   private static instance: UserService | null = null;
 
-  private constructor() {}
-
   static getInstance() {
     if (UserService.instance === null) {
       UserService.instance = new UserService();
@@ -18,7 +16,7 @@ class UserService {
 
   validateEmail(email: string) {
     return email.match(
-      /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      /^(([^<>()[\]\\.,;:\s@\\"]+(\.[^<>()[\]\\.,;:\s@\\"]+)*)|(\\".+\\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     );
   }
 }
