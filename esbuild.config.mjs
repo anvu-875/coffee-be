@@ -1,5 +1,4 @@
 import esbuild from 'esbuild';
-import { tsPathsPlugin } from '@awalgawe/esbuild-typescript-paths-plugin';
 
 /**
  * @type {import('esbuild').BuildOptions}
@@ -18,8 +17,7 @@ const config = {
     'swagger-jsdoc',
     '@prisma/client',
     'swagger-docs.json'
-  ],
-  plugins: [tsPathsPlugin()]
+  ]
 };
 
 async function run() {

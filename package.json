@@ -41,7 +41,6 @@
     "zod": "^4.0.10"
   },
   "devDependencies": {
-    "@awalgawe/esbuild-typescript-paths-plugin": "^1.0.1",
     "@eslint/js": "^9.32.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
