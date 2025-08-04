@@ -17,7 +17,6 @@ Thumbs.db
 
 # Others
 coverage/
-
-# Optional: ignore local database dumps
-*.dump
-*.sql
+package-lock.json
+pnpm-lock.yaml
+swagger-docs.json
