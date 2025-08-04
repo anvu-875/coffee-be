@@ -57,6 +57,11 @@ app.use(express.static(path.publicDir));
 // middleware to define API documentation
 swaggerDocs(app);
 
+// health check route
+app.get('/healthz', (_req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
 // 2) ROUTES
 app.use(`/api/${authRouteName}`, authRouter);
 

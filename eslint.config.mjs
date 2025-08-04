@@ -39,6 +39,7 @@ export default tseslint.config(
     rules: {
       'prefer-const': 'off',
       'prefer-template': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': 'warn'
     }
   },
