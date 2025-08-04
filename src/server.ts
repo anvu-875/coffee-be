@@ -32,6 +32,7 @@ const limiter = rateLimit({
   windowMs: timeWindow,
   message: 'Too many requests from this IP, please try again in an hour!'
 });
+app.set('trust proxy', 3);
 
 // apply the limiter to all routes that start with /api
 app.use('/api', limiter);
@@ -77,7 +78,7 @@ const PORT = env.PORT;
 async function main() {
   const establishApp = () => {
     app.listen(PORT, () => {
-      logger.info(`Server is running at http://localhost:${PORT}`);
+      logger.info(`Server is running at ${env.URL}`);
     });
   };
   logger.info('Env currently running on: ' + env.NODE_ENV);

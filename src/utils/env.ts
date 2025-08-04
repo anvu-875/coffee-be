@@ -13,7 +13,8 @@ const envSchema = z.object({
       message: 'PORT must be a positive number'
     }),
   DATABASE_URL: z.url(),
-  JWT_SECRET: z.string().min(32)
+  JWT_SECRET: z.string().min(32),
+  URL: z.url().optional()
 });
 
 const env = envSchema.parse(process.env);

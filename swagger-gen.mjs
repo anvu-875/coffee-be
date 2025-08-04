@@ -13,10 +13,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url:
-          process.env.NODE_ENV == 'development'
-            ? 'http://localhost:' + (process.env.PORT || 3000) + '/api'
-            : 'https://coffee-be-bx4n.onrender.com/api'
+        url: process.env.URL
       }
     ]
   },
