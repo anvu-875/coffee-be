@@ -4,7 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")"
 cd ..
 
-echo "🧹 Step 2: Prune non-runtime files"
 echo "→ Clearing npm cache..."
 npm cache clean --force || true
 
