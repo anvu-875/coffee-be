@@ -28,13 +28,15 @@ This is a Node.js backend project for a coffee shop, built with TypeScript, Expr
 ## Scripts
 
 - `npm run dev` — Start in development mode
-- `npm run build` — Build for production
+- `npm run build` — Build for production (generate dist folder)
 - `npm start` — Start in production
 
 ## Project Structure
 
 - `src/` — Source code
 - `prisma/` — Prisma schema and migrations
+- `public/` — Static assets (e.g., images, documentation)
+- `deploy/` — Bundling and Pruning script for production's source code
 
 ## License
 
