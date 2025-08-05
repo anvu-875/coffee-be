@@ -14,7 +14,7 @@ const envSchema = z.object({
     }),
   DATABASE_URL: z.url(),
   JWT_SECRET: z.string().min(32),
-  URL: z.url().optional()
+  URL: z.url()
 });
 
 const env = envSchema.parse(process.env);

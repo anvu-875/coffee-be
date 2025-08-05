@@ -9,31 +9,43 @@ const __dirname = dirname(__filename);
 process.chdir(resolve(__dirname, '..'));
 
 function run(cmd, desc) {
-  console.log(desc);
-  execSync(cmd, {
-    stdio: 'inherit',
-    env: { ...process.env, NODE_ENV: 'production' },
-  });
+  if (desc) {
+    console.log(desc);
+  }
+  try {
+    execSync(cmd, {
+      stdio: 'inherit',
+      env: { ...process.env, NODE_ENV: 'production' }
+    });
+  } catch (error) {
+    console.error(`Error occurred while executing command: ${cmd}`);
+    console.error(error);
+  }
 }
 
 function safe(cmd) {
   try {
     execSync(cmd, { stdio: 'ignore' });
-  } catch {}
+  } catch (error) {
+    console.error(`Error occurred while executing command: ${cmd}`);
+    console.error(error);
+  }
 }
 
 console.log('🔁 Step 0: Install all deps');
 safe('npm cache clean --force');
-execSync('npm i', {
-  stdio: 'inherit',
-  env: { ...process.env, NODE_ENV: 'development' },
-});
-
-console.log('→ Setting NODE_ENV to production');
-console.log(`→ NODE_ENV=production`);
+try {
+  execSync('npm i', {
+    stdio: 'inherit',
+    env: { ...process.env, NODE_ENV: 'development' }
+  });
+} catch (error) {
+  console.error(`Error occurred while executing command: npm i`);
+  console.error(error);
+}
 
 console.log('🏗️ Step 1: Build project');
-run('npm run build', '🏗️ Building project');
+run('npm run build');
 
 console.log('🧹 Step 2: Prune non-runtime files');
 safe('npm cache clean --force');
@@ -65,7 +77,12 @@ for (const entry of readdirSync('.', { withFileTypes: true })) {
 }
 
 console.log('🗑 Deleting node_modules...');
-execSync('rimraf node_modules', { stdio: 'inherit' });
+try {
+  execSync('rimraf node_modules', { stdio: 'inherit' });
+} catch (error) {
+  console.error(`Error occurred while executing command: rimraf node_modules`);
+  console.error(error);
+}
 
 console.log('→ Restoring runtime folders...');
 moveSafe(`${tmpDir}/dist`, 'dist');
@@ -78,25 +95,37 @@ console.log('📦 Step 3: Write runtime package.json + install runtime deps');
 
 const runtimePackageJson = {
   scripts: {
-    start: 'node dist/index.js',
-  },
+    start: 'node dist/index.js'
+  }
 };
 writeFileSync('package.json', JSON.stringify(runtimePackageJson, null, 2));
 
 console.log('→ Installing runtime dependencies...');
-run(`npm install ${external.join(' ')} --no-save --no-audit`, `📦 ${external.join(' ')}`);
+run(
+  `npm install ${external.join(' ')} --no-save --no-audit`,
+  `📦 ${external.join(' ')}`
+);
 
 console.log('🔧 Step 4: Generate Prisma client');
-run('npx prisma generate', '🔧 Generating Prisma client');
+run('npx prisma generate');
 
 console.log('✅ Build complete. Final structure:');
 console.log('📁 Final structure in current directory:');
 for (const entry of readdirSync('.', { withFileTypes: true })) {
-  if (['dist', 'prisma', 'public', 'swagger-docs.json', 'package.json', 'node_modules'].includes(entry.name)) {
+  if (
+    [
+      'dist',
+      'prisma',
+      'public',
+      'swagger-docs.json',
+      'package.json',
+      'node_modules'
+    ].includes(entry.name)
+  ) {
     console.log(' -', entry.name);
   }
 }
 
-// if (existsSync('deploy')) {
-//   rmSync('deploy', { recursive: true, force: true })
-// }
+if (existsSync('deploy')) {
+  rmSync('deploy', { recursive: true, force: true });
+}
