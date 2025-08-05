@@ -18,7 +18,7 @@ npm run build
 cd "$(dirname "$0")"
 
 echo "🧹 Step 2: Prune non-runtime files"
-sh prune.sh
+bash prune.sh
 
 echo "📦 Step 3: Write runtime package.json + install runtime deps"
 node setup-runtime.mjs
