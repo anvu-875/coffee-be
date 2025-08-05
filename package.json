@@ -4,7 +4,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "SET NODE_ENV=development&& nodemon",
-    "build": "node swagger-gen.mjs && rimraf dist && node esbuild.config.mjs",
+    "build": "node deploy/swagger-gen.mjs && rimraf dist && node deploy/esbuild.config.mjs",
+    "build:prod": "sh deploy/build.product.sh",
     "start": "SET NODE_ENV=production&& node dist/index.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

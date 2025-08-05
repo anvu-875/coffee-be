@@ -9,6 +9,7 @@ export default tseslint.config(
     'dist',
     'node_modules',
     'public',
+    'deploy',
     'esbuild.config.mjs',
     'eslint.config.mjs',
     'nodemon.json',
@@ -19,7 +20,7 @@ export default tseslint.config(
     'swagger-docs.json',
     'tsconfig.json',
     '.prettierignore',
-    '.prettierrc.cjs'
+    '.prettierrc'
   ]),
   {
     files: ['src/**/*.ts'],

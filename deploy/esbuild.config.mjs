@@ -1,4 +1,6 @@
+import 'dotenv/config';
 import esbuild from 'esbuild';
+import external from './external-deps.mjs';
 
 /**
  * @type {import('esbuild').BuildOptions}
@@ -9,15 +11,9 @@ const config = {
   platform: 'node',
   target: 'es2023',
   outfile: 'dist/index.js',
-  sourcemap: true,
+  sourcemap: process.env.NODE_ENV != 'production',
   tsconfig: 'tsconfig.json',
-  external: [
-    'express',
-    'swagger-ui-express',
-    'swagger-jsdoc',
-    '@prisma/client',
-    'swagger-docs.json'
-  ]
+  external
 };
 
 async function run() {

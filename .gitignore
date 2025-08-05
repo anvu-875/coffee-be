@@ -17,6 +17,3 @@ Thumbs.db
 
 # Others
 coverage/
-package-lock.json
-pnpm-lock.yaml
-swagger-docs.json
