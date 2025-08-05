@@ -4,9 +4,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 cd ..
 
-echo "🔁 Step 0: Clean install"
+echo "🔁 Step 0: Install all deps"
 npm cache clean --force >/dev/null 2>&1 || true
-npm ci
+npm i
 
 echo "→ Setting NODE_ENV to production"
 export NODE_ENV=production
