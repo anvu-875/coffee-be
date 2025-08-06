@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import HttpError from '@/utils/http-error';
 import { Prisma } from '@prisma/client';
+import env from '@/utils/env';
 
 /**
  * Convert Prisma P2002 error to HttpError with detail for multiple fields
@@ -25,14 +26,14 @@ function handlePrismaKnownError(
     }
 
     return new HttpError(
-      `Duplicate value on field(s): ${Object.keys(errors).join(', ')}`,
+      `(Prisma) Duplicate value on field(s): ${Object.keys(errors).join(', ')}`,
       409,
       errors
     );
   }
 
   if (err.code === 'P2025') {
-    return new HttpError('Resource not found.', 404);
+    return new HttpError('(Prisma) Resource not found.', 404);
   }
 
   // default fallback
@@ -49,13 +50,13 @@ const errorHandler = (
   next: NextFunction
 ) => {
   // Convert Prisma errors if not in development
-  if (process.env.NODE_ENV !== 'development') {
+  if (env.NODE_ENV !== 'development') {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       err = handlePrismaKnownError(err);
     } else if (err instanceof Prisma.PrismaClientValidationError) {
-      err = new HttpError('Invalid query or input data.', 400);
+      err = new HttpError('(Prisma) Invalid query or input data.', 400);
     } else if (err instanceof Prisma.PrismaClientInitializationError) {
-      err = new HttpError('Database connection failed.', 500);
+      err = new HttpError('(Prisma) Database connection failed.', 500);
     }
   }
 

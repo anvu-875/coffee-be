@@ -17,6 +17,11 @@ const envSchema = z.object({
   URL: z.url()
 });
 
+/**
+ * Environment configuration.
+ * Validates and parses environment variables using zod schema.
+ * Throws an error if any variable is missing or invalid.
+ */
 const env = envSchema.parse(process.env);
 
 export default env;
