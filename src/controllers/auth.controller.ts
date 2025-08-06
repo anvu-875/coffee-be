@@ -30,15 +30,13 @@ export const login = catchAsync(async (req, res, next) => {
 });
 
 export const register = catchAsync(async (req, res, next) => {
-  const { email, password, name } = req.body;
+  const { email, password } = req.body;
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return next(new HttpError('Email already in use.', StatusCodes.CONFLICT));
   }
   const hashed = await authService.hashPassword(password);
-  const user = await prisma.user.create({
-    data: { email, passwordHash: hashed, name }
-  });
+  const user = await userService.createUserWithoutName(email, hashed);
   const accessToken = authService.generateAccessToken(user);
   const refreshToken = authService.generateRefreshToken(user);
   return res.status(StatusCodes.CREATED).json({

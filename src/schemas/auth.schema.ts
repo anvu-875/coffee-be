@@ -45,21 +45,12 @@ export const loginSchema = z.object({
  *           type: string
  *           minLength: 6
  *           description: User's password (minimum 6 characters).
- *         name:
- *           type: string
- *           minLength: 2
- *           maxLength: 100
- *           description: User's full name.
  */
 export const registerSchema = z.object({
   email: z.string('Email is required').email('Invalid email address'),
   password: z
     .string('Password is required')
-    .min(6, 'Password must be at least 6 characters'),
-  name: z
-    .string('Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name must be at most 100 characters')
+    .min(6, 'Password must be at least 6 characters')
 });
 
 /**
