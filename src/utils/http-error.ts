@@ -72,7 +72,7 @@ class HttpError extends Error {
         status: this.statusCode,
         statusText: this.reasonPhrase,
         msg: this.message,
-        error: this.errorDetail,
+        err: this.errorDetail,
         stack: this.stack,
         isOperational: this.isOperational
       };
@@ -80,7 +80,9 @@ class HttpError extends Error {
       // production
       return {
         status: this.statusCode,
-        msg: this.message
+        statusText: this.reasonPhrase,
+        msg: this.message,
+        err: this.errorDetail
       };
     }
   }

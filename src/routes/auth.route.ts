@@ -1,5 +1,11 @@
 import { Router } from 'express';
 import { login, register, refreshToken } from '@/controllers/auth.controller';
+import { validateBody } from '@/middlewares/validate.middleware';
+import {
+  loginSchema,
+  refreshTokenSchema,
+  registerSchema
+} from '@/schemas/auth.schema';
 
 const router = Router();
 
@@ -17,19 +23,14 @@ export const authRouteName = 'auth';
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
+ *             $ref: '#/components/schemas/LoginSchema'
  *     responses:
  *       200:
  *         description: Login successful
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', login);
+router.post('/login', validateBody(loginSchema), login);
 
 /**
  * @openapi
@@ -43,21 +44,14 @@ router.post('/login', login);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *               name:
- *                 type: string
+ *             $ref: '#/components/schemas/RegisterSchema'
  *     responses:
  *       201:
  *         description: User registered
  *       409:
  *         description: Email already in use
  */
-router.post('/register', register);
+router.post('/register', validateBody(registerSchema), register);
 
 /**
  * @openapi
@@ -71,16 +65,13 @@ router.post('/register', register);
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               refreshToken:
- *                 type: string
+ *             $ref: '#/components/schemas/RefreshTokenSchema'
  *     responses:
  *       200:
  *         description: Token refreshed
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/refresh', refreshToken);
+router.post('/refresh', validateBody(refreshTokenSchema), refreshToken);
 
 export default router;

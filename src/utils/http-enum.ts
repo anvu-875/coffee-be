@@ -102,11 +102,11 @@ export enum ServerError {
  * Combined status codes object for easy access.
  */
 export const StatusCodes = {
-  Informational,
-  Success,
-  Redirection,
-  ClientError,
-  ServerError
+  ...Informational,
+  ...Success,
+  ...Redirection,
+  ...ClientError,
+  ...ServerError
 };
 
 // Combined map for lookup
