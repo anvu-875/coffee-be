@@ -28,6 +28,7 @@
     "@prisma/extension-accelerate": "^2.0.2",
     "bcryptjs": "^3.0.2",
     "chalk": "^5.4.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "email-validator": "^2.0.4",
@@ -46,6 +47,7 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/hpp": "^0.2.6",

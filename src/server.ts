@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
+import cookieParser from 'cookie-parser';
 import env from './utils/env';
 import path from './utils/path';
 import HttpError from './utils/http-error';
@@ -36,6 +37,9 @@ app.set('trust proxy', 3);
 
 // apply the limiter to all routes that start with /api
 app.use('/api', limiter);
+
+//middleware to parse the cookies
+app.use(cookieParser());
 
 // middleware to parse the body of the request into json
 // limit the size of the body to 10kb
