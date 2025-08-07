@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'fs';
-import external from './external-deps.mjs';
+import { external } from './esbuild.config.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -101,10 +101,14 @@ const runtimePackageJson = {
 writeFileSync('package.json', JSON.stringify(runtimePackageJson, null, 2));
 
 console.log('→ Installing runtime dependencies...');
-run(
-  `npm install ${external.join(' ')} --no-save --no-audit`,
-  `📦 ${external.join(' ')}`
-);
+if (external.length > 0) {
+  run(
+    `npm install ${external.join(' ')} --no-save --no-audit`,
+    `📦 ${external.join(' ')}`
+  );
+} else {
+  console.log('No external dependencies to install.');
+}
 
 console.log('🔧 Step 4: Generate Prisma client');
 run('npx prisma generate');
