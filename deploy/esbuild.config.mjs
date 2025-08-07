@@ -1,6 +1,12 @@
 import 'dotenv/config';
 import esbuild from 'esbuild';
-import external from './external-deps.mjs';
+
+export const external = [
+  'express',
+  'swagger-ui-express',
+  'swagger-jsdoc',
+  '@prisma/client'
+];
 
 /**
  * @type {import('esbuild').BuildOptions}
@@ -12,12 +18,11 @@ const config = {
   target: 'es2023',
   outfile: 'dist/index.js',
   sourcemap: process.env.NODE_ENV != 'production',
-  tsconfig: 'tsconfig.json',
-  external
+  tsconfig: 'tsconfig.json'
 };
 
 async function run() {
-  await esbuild.build(config);
+  await esbuild.build(external.length > 0 ? { ...config, external } : config);
   console.log('✅ esbuild: build completed');
 }
 
