@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import esbuild from 'esbuild';
 
 export const external = [
