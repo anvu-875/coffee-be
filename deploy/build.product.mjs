@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'fs';
-import { external } from './esbuild.config.mjs';
+import { external } from './external-deps.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

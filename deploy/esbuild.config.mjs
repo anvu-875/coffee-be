@@ -1,11 +1,5 @@
 import esbuild from 'esbuild';
-
-export const external = [
-  'express',
-  'swagger-ui-express',
-  'swagger-jsdoc',
-  '@prisma/client'
-];
+import external from './external-deps.mjs';
 
 /**
  * @type {import('esbuild').BuildOptions}
