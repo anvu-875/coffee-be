@@ -1,5 +1,10 @@
 import prisma from '@/db/prisma';
-import authService from '@/services/auth.service';
+import authService, {
+  ACCESS_COOKIE_OPTIONS,
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_COOKIE_OPTIONS,
+  REFRESH_TOKEN_COOKIE_NAME
+} from '@/services/auth.service';
 import catchAsync from '@/utils/catch-async';
 import HttpError from '@/utils/http-error';
 import jwt from 'jsonwebtoken';
@@ -22,6 +27,8 @@ export const login = catchAsync(async (req, res, next) => {
   }
   const accessToken = authService.generateAccessToken(user);
   const refreshToken = authService.generateRefreshToken(user);
+  res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
+  res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
   return res.status(StatusCodes.OK).json({
     accessToken,
     refreshToken,
@@ -71,4 +78,12 @@ export const refreshToken = catchAsync(async (req, res, next) => {
       new HttpError('Invalid refresh token.', StatusCodes.BAD_REQUEST)
     );
   }
+});
+
+export const logout = catchAsync(async (_req, res) => {
+  res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, ACCESS_COOKIE_OPTIONS);
+  res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
+  return res
+    .status(StatusCodes.OK)
+    .json({ message: 'Logged out successfully.' });
 });

@@ -52,20 +52,3 @@ export const registerSchema = z.object({
     .string('Password is required')
     .min(6, 'Password must be at least 6 characters')
 });
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     RefreshTokenSchema:
- *       type: object
- *       required:
- *         - refreshToken
- *       properties:
- *         refreshToken:
- *           type: string
- *           description: The refresh token.
- */
-export const refreshTokenSchema = z.object({
-  refreshToken: z.string('Refresh token is required')
-});

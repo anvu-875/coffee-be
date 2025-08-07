@@ -1,11 +1,15 @@
 import { Router } from 'express';
-import { login, register, refreshToken } from '@/controllers/auth.controller';
-import { validateBody } from '@/middlewares/validate.middleware';
 import {
-  loginSchema,
-  refreshTokenSchema,
-  registerSchema
-} from '@/schemas/auth.schema';
+  login,
+  register,
+  refreshToken,
+  logout
+} from '@/controllers/auth.controller';
+import {
+  validateBody,
+  validateRefreshCookies
+} from '@/middlewares/validate.middleware';
+import { loginSchema, registerSchema } from '@/schemas/auth.schema';
 
 const router = Router();
 
@@ -72,6 +76,21 @@ router.post('/register', validateBody(registerSchema), register);
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/refresh', validateBody(refreshTokenSchema), refreshToken);
+router.post('/refresh', validateRefreshCookies, refreshToken);
+
+/**
+ * @openapi
+ * /auth/logout:
+ *   post:
+ *     summary: User logout
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         description: User logged out successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/logout', validateRefreshCookies, logout);
 
 export default router;
