@@ -1,16 +1,19 @@
 import esbuild from 'esbuild';
 import external from './external-deps.mjs';
 
+const isNotProduction = process.env.NODE_ENV !== 'production';
+
 /**
  * @type {import('esbuild').BuildOptions}
  */
 const config = {
   entryPoints: ['src/server.ts'],
   bundle: true,
+  minify: !isNotProduction,
   platform: 'node',
   target: 'es2023',
   outfile: 'dist/index.js',
-  sourcemap: process.env.NODE_ENV != 'production',
+  sourcemap: isNotProduction,
   tsconfig: 'tsconfig.json'
 };
 
