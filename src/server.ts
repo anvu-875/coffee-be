@@ -23,20 +23,21 @@ app.use(cors());
 
 app.use(morgan('common')); // log requests to the console
 
-// limit the number of requests from the same IP
-// in this case, 100 requests per hour
-const timeWindow = 60 * 60 * 1000; // 1 hour
-const maxRequest = 100;
+if (env.NODE_ENV === 'production') {
+  // limit the number of requests from the same IP
+  // in this case, 100 requests per hour
+  const timeWindow = 60 * 60 * 1000; // 1 hour
+  const maxRequest = 100;
 
-const limiter = rateLimit({
-  max: maxRequest,
-  windowMs: timeWindow,
-  message: 'Too many requests from this IP, please try again in an hour!'
-});
-app.set('trust proxy', 3);
-
-// apply the limiter to all routes that start with /api
-app.use('/api', limiter);
+  const limiter = rateLimit({
+    max: maxRequest,
+    windowMs: timeWindow,
+    message: 'Too many requests from this IP, please try again in an hour!'
+  });
+  app.set('trust proxy', 3);
+  // apply the limiter to all routes that start with /api
+  app.use('/api', limiter);
+}
 
 //middleware to parse the cookies
 app.use(cookieParser());
