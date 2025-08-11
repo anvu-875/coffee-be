@@ -165,7 +165,7 @@ run('npx prisma generate');
 console.log('✅ Build complete. Final structure:');
 console.log('📁 Final structure in current directory:');
 for (const entry of readdirSync('.', { withFileTypes: true })) {
-  if ([...runtimeTmpArr, nodeModules].includes(entry.name)) {
+  if ([...keepList, nodeModules].includes(entry.name)) {
     console.log(' -', entry.name);
   }
 }
