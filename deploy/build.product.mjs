@@ -1,7 +1,15 @@
 import { execSync } from 'child_process';
-import { dirname, resolve } from 'path';
+import { dirname, resolve, join } from 'path';
 import { fileURLToPath } from 'url';
-import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'fs';
+import {
+  existsSync,
+  mkdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+  statSync,
+  readdirSync
+} from 'fs';
 import { externalDeps, keepList } from './constrant.mjs';
 
 // Ensure the current working directory is set to the deploy directory
