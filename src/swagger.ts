@@ -4,9 +4,9 @@ import fs from 'fs';
 import path from './utils/path';
 import logger from './utils/logger';
 
-const swaggerJsonPath = path.join(path.rootDir, './swagger-docs.json');
-
 function loadSwaggerSpec() {
+  const swaggerJsonPath = path.join(path.rootDir, './swagger-docs.json');
+
   if (fs.existsSync(swaggerJsonPath)) {
     logger.info('[Swagger] Using prebuilt swagger-docs.json');
     return JSON.parse(fs.readFileSync(swaggerJsonPath, 'utf-8')) as object;

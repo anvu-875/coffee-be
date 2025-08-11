@@ -3,10 +3,16 @@ import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'fs';
 import external from './external-deps.mjs';
+import { fileName as swaggerFileName } from './swagger-gen.mjs';
 
+const nodeModules = 'node_modules';
+
+// Ensure the current working directory is set to the deploy directory
+// Edit it if necessary
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 process.chdir(resolve(__dirname, '..'));
+// -------------------------------------------------------------------
 
 function run(cmd, desc) {
   if (desc) {
@@ -32,7 +38,7 @@ function safe(cmd) {
   }
 }
 
-console.log('🔁 Step 0: Install all deps');
+console.log('🔁 Step 0: Install all deps (Development Environment)');
 safe('npm cache clean --force');
 try {
   execSync('npm i', {
@@ -51,6 +57,9 @@ console.log('🧹 Step 2: Prune non-runtime files');
 safe('npm cache clean --force');
 
 const tmpDir = '.runtime-tmp';
+// Edit this array below to include all runtime files and directories
+const runtimeTmpArr = ['dist', 'prisma', 'public', swaggerFileName];
+
 mkdirSync(tmpDir, { recursive: true });
 
 function moveSafe(from, to) {
@@ -61,34 +70,43 @@ function moveSafe(from, to) {
   }
 }
 
-moveSafe('dist', `${tmpDir}/dist`);
-moveSafe('prisma', `${tmpDir}/prisma`);
-moveSafe('public', `${tmpDir}/public`);
-moveSafe('swagger-docs.json', `${tmpDir}/swagger-docs.json`);
+runtimeTmpArr.forEach((item) => {
+  moveSafe(item, `${tmpDir}/${item}`);
+});
 
 console.log('→ Removing all files except runtime...');
 const { readdirSync } = await import('fs');
 for (const entry of readdirSync('.', { withFileTypes: true })) {
-  if (!['.runtime-tmp', 'node_modules', 'deploy'].includes(entry.name)) {
+  if (![tmpDir, nodeModules, 'deploy'].includes(entry.name)) {
     try {
       rmSync(entry.name, { recursive: true, force: true });
     } catch {}
   }
 }
 
-console.log('🗑 Deleting node_modules...');
+console.log(`🗑 Deleting ${nodeModules}...`);
+
+//checking rimraf existence
+console.log('→ Checking for rimraf...');
+const rimrafIsExisted = existsSync(`./${nodeModules}/.bin/rimraf`);
+if (!rimrafIsExisted) {
+  console.log('→ rimraf not found, installing it...');
+  run('npm install rimraf --no-save --no-audit', '📦 rimraf');
+}
+
 try {
-  execSync('rimraf node_modules', { stdio: 'inherit' });
+  execSync(`rimraf ${nodeModules}`, { stdio: 'inherit' });
 } catch (error) {
-  console.error(`Error occurred while executing command: rimraf node_modules`);
+  console.error(
+    `Error occurred while executing command: rimraf ${nodeModules}`
+  );
   console.error(error);
 }
 
 console.log('→ Restoring runtime folders...');
-moveSafe(`${tmpDir}/dist`, 'dist');
-moveSafe(`${tmpDir}/prisma`, 'prisma');
-moveSafe(`${tmpDir}/public`, 'public');
-moveSafe(`${tmpDir}/swagger-docs.json`, 'swagger-docs.json');
+runtimeTmpArr.forEach((item) => {
+  moveSafe(`${tmpDir}/${item}`, item);
+});
 rmSync(tmpDir, { recursive: true, force: true });
 
 console.log('📦 Step 3: Write runtime package.json + install runtime deps');
@@ -102,10 +120,37 @@ writeFileSync('package.json', JSON.stringify(runtimePackageJson, null, 2));
 
 console.log('→ Installing runtime dependencies...');
 if (external.length > 0) {
+  function getDirSize(dir) {
+    let total = 0;
+    const files = readdirSync(dir, { withFileTypes: true });
+    for (const file of files) {
+      const fullPath = join(dir, file.name);
+      if (file.isDirectory()) {
+        total += getDirSize(fullPath);
+      } else {
+        total += statSync(fullPath).size;
+      }
+    }
+    return total;
+  }
+
+  function formatSize(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    while (bytes >= 1024 && i < units.length - 1) {
+      bytes /= 1024;
+      i++;
+    }
+    return `${bytes.toFixed(2)} ${units[i]}`;
+  }
+
   run(
     `npm install ${external.join(' ')} --no-save --no-audit`,
     `📦 ${external.join(' ')}`
   );
+
+  const size = getDirSize(nodeModules);
+  console.log(`📦 ${nodeModules} size: ${formatSize(size)}`);
 } else {
   console.log('No external dependencies to install.');
 }
@@ -116,16 +161,7 @@ run('npx prisma generate');
 console.log('✅ Build complete. Final structure:');
 console.log('📁 Final structure in current directory:');
 for (const entry of readdirSync('.', { withFileTypes: true })) {
-  if (
-    [
-      'dist',
-      'prisma',
-      'public',
-      'swagger-docs.json',
-      'package.json',
-      'node_modules'
-    ].includes(entry.name)
-  ) {
+  if ([...runtimeTmpArr, nodeModules].includes(entry.name)) {
     console.log(' -', entry.name);
   }
 }

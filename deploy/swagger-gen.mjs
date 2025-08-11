@@ -22,9 +22,11 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
+export const fileName = 'swagger-docs.json';
+
 fs.writeFileSync(
-  path.resolve(process.cwd(), 'swagger-docs.json'),
+  path.resolve(process.cwd(), fileName),
   JSON.stringify(swaggerSpec, null, 2)
 );
 
-console.log('✅ swagger-docs.json generated');
+console.log(`✅ ${fileName} generated`);
