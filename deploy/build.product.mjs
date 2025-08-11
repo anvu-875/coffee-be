@@ -2,10 +2,7 @@ import { execSync } from 'child_process';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'fs';
-import external from './external-deps.mjs';
-import { fileName as swaggerFileName } from './swagger-gen.mjs';
-
-const nodeModules = 'node_modules';
+import { externalDeps, keepList } from './constrant.mjs';
 
 // Ensure the current working directory is set to the deploy directory
 // Edit it if necessary
@@ -57,8 +54,8 @@ console.log('🧹 Step 2: Prune non-runtime files');
 safe('npm cache clean --force');
 
 const tmpDir = '.runtime-tmp';
+const nodeModules = 'node_modules';
 // Edit this array below to include all runtime files and directories
-const runtimeTmpArr = ['dist', 'prisma', 'public', swaggerFileName];
 
 mkdirSync(tmpDir, { recursive: true });
 
@@ -70,7 +67,7 @@ function moveSafe(from, to) {
   }
 }
 
-runtimeTmpArr.forEach((item) => {
+keepList.forEach((item) => {
   moveSafe(item, `${tmpDir}/${item}`);
 });
 
@@ -104,7 +101,7 @@ try {
 }
 
 console.log('→ Restoring runtime folders...');
-runtimeTmpArr.forEach((item) => {
+keepList.forEach((item) => {
   moveSafe(`${tmpDir}/${item}`, item);
 });
 rmSync(tmpDir, { recursive: true, force: true });
@@ -119,7 +116,7 @@ const runtimePackageJson = {
 writeFileSync('package.json', JSON.stringify(runtimePackageJson, null, 2));
 
 console.log('→ Installing runtime dependencies...');
-if (external.length > 0) {
+if (externalDeps.length > 0) {
   function getDirSize(dir) {
     let total = 0;
     const files = readdirSync(dir, { withFileTypes: true });
@@ -145,8 +142,8 @@ if (external.length > 0) {
   }
 
   run(
-    `npm install ${external.join(' ')} --no-save --no-audit`,
-    `📦 ${external.join(' ')}`
+    `npm install ${externalDeps.join(' ')} --no-save --no-audit`,
+    `📦 ${externalDeps.join(' ')}`
   );
 
   const size = getDirSize(nodeModules);

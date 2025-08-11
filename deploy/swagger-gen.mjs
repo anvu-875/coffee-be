@@ -2,6 +2,7 @@ import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import swaggerJSDoc from 'swagger-jsdoc';
+import { swaggerJSON } from './constrant.mjs';
 
 const swaggerOptions = {
   definition: {
@@ -22,11 +23,9 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
-export const fileName = 'swagger-docs.json';
-
 fs.writeFileSync(
-  path.resolve(process.cwd(), fileName),
+  path.resolve(process.cwd(), swaggerJSON),
   JSON.stringify(swaggerSpec, null, 2)
 );
 
-console.log(`✅ ${fileName} generated`);
+console.log(`✅ ${swaggerJSON} generated`);
