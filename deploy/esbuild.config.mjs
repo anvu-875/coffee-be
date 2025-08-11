@@ -2,6 +2,7 @@ import esbuild from 'esbuild';
 import external from './external-deps.mjs';
 
 const isNotProduction = process.env.NODE_ENV !== 'production';
+const isProduction = !isNotProduction;
 
 /**
  * @type {import('esbuild').BuildOptions}
@@ -9,7 +10,7 @@ const isNotProduction = process.env.NODE_ENV !== 'production';
 const config = {
   entryPoints: ['src/server.ts'],
   bundle: true,
-  minify: !isNotProduction,
+  minify: isProduction,
   platform: 'node',
   target: 'es2023',
   outfile: 'dist/index.js',

@@ -1,8 +1,3 @@
-const external = [
-  'express',
-  'swagger-ui-express',
-  'swagger-jsdoc',
-  '@prisma/client'
-];
+const external = ['swagger-ui-express', '@prisma/client'];
 
 export default external;
