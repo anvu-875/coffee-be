@@ -80,7 +80,6 @@ keepList.forEach((item) => {
 });
 
 console.log('→ Removing all files except runtime...');
-const { readdirSync } = await import('fs');
 for (const entry of readdirSync('.', { withFileTypes: true })) {
   if (![tmpDir, nodeModules, 'deploy'].includes(entry.name)) {
     try {
