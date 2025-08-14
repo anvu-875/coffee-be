@@ -1,8 +1,9 @@
 import 'dotenv/config';
+import YAML from 'yaml';
+import swaggerJSDoc from 'swagger-jsdoc';
 import fs from 'fs';
 import path from 'path';
-import swaggerJSDoc from 'swagger-jsdoc';
-import { swaggerJSON } from './constrant.mjs';
+import { PROD_DIR, SWAGGER_JSON, SWAGGER_YAML } from './constrant.mjs';
 
 const swaggerOptions = {
   definition: {
@@ -23,9 +24,16 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
+const outDir = path.resolve(process.cwd(), PROD_DIR);
+
 fs.writeFileSync(
-  path.resolve(process.cwd(), swaggerJSON),
+  path.resolve(outDir, SWAGGER_JSON),
   JSON.stringify(swaggerSpec, null, 2)
 );
 
-console.log(`✅ ${swaggerJSON} generated`);
+fs.writeFileSync(
+  path.resolve(outDir, SWAGGER_YAML),
+  YAML.stringify(swaggerSpec, { indent: 2 })
+);
+
+console.log(`✅ API specification generated`);

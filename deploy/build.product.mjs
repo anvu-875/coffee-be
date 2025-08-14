@@ -10,7 +10,11 @@ import {
   statSync,
   readdirSync
 } from 'fs';
-import { externalDeps, keepList } from './constrant.mjs';
+import {
+  EXTERNAL_DEPS,
+  KEEP_LIST,
+  PRODUCTION_PACKAGE_JSON
+} from './constrant.mjs';
 
 // Ensure the current working directory is set to the deploy directory
 // Edit it if necessary
@@ -63,7 +67,6 @@ safe('npm cache clean --force');
 
 const tmpDir = '.runtime-tmp';
 const nodeModules = 'node_modules';
-// Edit this array below to include all runtime files and directories
 
 mkdirSync(tmpDir, { recursive: true });
 
@@ -75,7 +78,7 @@ function moveSafe(from, to) {
   }
 }
 
-keepList.forEach((item) => {
+KEEP_LIST.forEach((item) => {
   moveSafe(item, `${tmpDir}/${item}`);
 });
 
@@ -108,22 +111,16 @@ try {
 }
 
 console.log('→ Restoring runtime folders...');
-keepList.forEach((item) => {
+KEEP_LIST.forEach((item) => {
   moveSafe(`${tmpDir}/${item}`, item);
 });
 rmSync(tmpDir, { recursive: true, force: true });
 
 console.log('📦 Step 3: Write runtime package.json + install runtime deps');
-
-const runtimePackageJson = {
-  scripts: {
-    start: 'node dist/index.js'
-  }
-};
-writeFileSync('package.json', JSON.stringify(runtimePackageJson, null, 2));
+writeFileSync('package.json', JSON.stringify(PRODUCTION_PACKAGE_JSON, null, 2));
 
 console.log('→ Installing runtime dependencies...');
-if (externalDeps.length > 0) {
+if (EXTERNAL_DEPS.length > 0) {
   function getDirSize(dir) {
     let total = 0;
     const files = readdirSync(dir, { withFileTypes: true });
@@ -149,8 +146,8 @@ if (externalDeps.length > 0) {
   }
 
   run(
-    `npm install ${externalDeps.join(' ')} --no-save --no-audit`,
-    `📦 ${externalDeps.join(' ')}`
+    `npm install ${EXTERNAL_DEPS.join(' ')} --no-save --no-audit`,
+    `📦 ${EXTERNAL_DEPS.join(' ')}`
   );
 
   const size = getDirSize(nodeModules);
@@ -165,7 +162,7 @@ run('npx prisma generate');
 console.log('✅ Build complete. Final structure:');
 console.log('📁 Final structure in current directory:');
 for (const entry of readdirSync('.', { withFileTypes: true })) {
-  if ([...keepList, nodeModules].includes(entry.name)) {
+  if ([...KEEP_LIST, nodeModules].includes(entry.name)) {
     console.log(' -', entry.name);
   }
 }
