@@ -8,9 +8,24 @@ export const EXTERNAL_DEPS = [
 ];
 
 /**
+ * Directory for the production build.
+ */
+export const PROD_DIR = 'dist';
+
+/**
+ * File name for the generated Swagger API specification JSON file.
+ */
+export const SWAGGER_JSON = 'api-spec.json';
+
+/**
+ * File name for the generated Swagger API specification YAML file.
+ */
+export const SWAGGER_YAML = 'api-spec.yaml';
+
+/**
  * List of runtime directories to keep in the final build.
  */
-export const KEEP_LIST = ['dist', 'prisma', 'public'];
+export const KEEP_LIST = [PROD_DIR, 'prisma', 'public'];
 
 /**
  * Configuration for the production package.json file.

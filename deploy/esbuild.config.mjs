@@ -1,5 +1,5 @@
 import esbuild from 'esbuild';
-import { EXTERNAL_DEPS } from './constrant.mjs';
+import { EXTERNAL_DEPS, PROD_DIR } from './constrant.mjs';
 
 const isNotProduction = process.env.NODE_ENV !== 'production';
 const isProduction = !isNotProduction;
@@ -13,7 +13,7 @@ const config = {
   minify: isProduction,
   platform: 'node',
   target: 'es2023',
-  outfile: 'dist/index.js',
+  outfile: `${PROD_DIR}/index.js`,
   legalComments: 'linked',
   sourcemap: isNotProduction,
   tsconfig: 'tsconfig.json'

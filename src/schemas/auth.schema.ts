@@ -2,7 +2,6 @@ import { z } from 'zod';
 
 /**
  * @preserve
- * @license
  * @swagger
  * components:
  *   schemas:
@@ -30,7 +29,6 @@ export const loginSchema = z.object({
 
 /**
  * @preserve
- * @license
  * @swagger
  * components:
  *   schemas:
@@ -59,7 +57,6 @@ export const registerSchema = z.object({
 
 /**
  * @preserve
- * @license
  * @swagger
  * components:
  *   schemas:
