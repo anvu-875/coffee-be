@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 import hpp from 'hpp';
 import cookieParser from 'cookie-parser';
 import env from './utils/env';
-import path from './utils/path';
+import path from 'path';
 import HttpError from './utils/http-error';
 import globalErrorHandler from './controllers/error.controller';
 import authRouter, { authRouteName } from './routes/auth.route';
@@ -58,7 +58,7 @@ app.use(
 );
 
 // middleware to serve static files
-app.use(express.static(path.publicDir));
+app.use(express.static(path.resolve(__dirname, '../public')));
 
 // middleware to define API documentation
 swaggerDocs(app);

@@ -1,5 +1,5 @@
 import esbuild from 'esbuild';
-import { externalDeps } from './constrant.mjs';
+import { EXTERNAL_DEPS } from './constrant.mjs';
 
 const isNotProduction = process.env.NODE_ENV !== 'production';
 const isProduction = !isNotProduction;
@@ -14,13 +14,14 @@ const config = {
   platform: 'node',
   target: 'es2023',
   outfile: 'dist/index.js',
+  legalComments: 'linked',
   sourcemap: isNotProduction,
   tsconfig: 'tsconfig.json'
 };
 
 async function run() {
   await esbuild.build(
-    externalDeps.length > 0 ? { ...config, external: externalDeps } : config
+    EXTERNAL_DEPS.length > 0 ? { ...config, external: EXTERNAL_DEPS } : config
   );
   console.log('✅ esbuild: build completed');
 }

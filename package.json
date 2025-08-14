@@ -10,7 +10,7 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "fix:code": "npm run lint:fix && npm run format:fix",
-    "build": "npm run fix:code && node deploy/swagger-gen.mjs && rimraf dist && node deploy/esbuild.config.mjs",
+    "build": "npm run fix:code && rimraf dist && node deploy/esbuild.config.mjs",
     "build:prod": "node deploy/build.product.mjs",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",

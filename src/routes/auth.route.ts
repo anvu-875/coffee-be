@@ -16,6 +16,8 @@ const router = Router();
 export const authRouteName = 'auth';
 
 /**
+ * @preserve
+ * @license
  * @openapi
  * /auth/login:
  *   post:
@@ -37,6 +39,8 @@ export const authRouteName = 'auth';
 router.post('/login', validateBody(loginSchema), login);
 
 /**
+ * @preserve
+ * @license
  * @openapi
  * /auth/register:
  *   post:
@@ -58,6 +62,8 @@ router.post('/login', validateBody(loginSchema), login);
 router.post('/register', validateBody(registerSchema), register);
 
 /**
+ * @preserve
+ * @license
  * @openapi
  * /auth/refresh:
  *   post:
@@ -79,6 +85,8 @@ router.post('/register', validateBody(registerSchema), register);
 router.post('/refresh', validateRefreshCookies, refreshToken);
 
 /**
+ * @preserve
+ * @license
  * @openapi
  * /auth/logout:
  *   post:

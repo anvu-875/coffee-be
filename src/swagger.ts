@@ -1,22 +1,26 @@
 import { type Express } from 'express';
+import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import fs from 'fs';
-import path from './utils/path';
-import logger from './utils/logger';
+import env from './utils/env';
 
-function loadSwaggerSpec() {
-  const swaggerJsonPath = path.join(path.rootDir, './api-spec.json');
+const swaggerOptions: swaggerJSDoc.Options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Coffee Shop API',
+      version: '1.0.0',
+      description: 'API documentation for the Coffee Shop backend'
+    },
+    servers: [
+      {
+        url: `${env.URL}/api`
+      }
+    ]
+  },
+  apis: ['dist/**/*.LEGAL.txt'] // Adjust the path to your compiled files
+};
 
-  if (fs.existsSync(swaggerJsonPath)) {
-    logger.info('[Swagger] Using prebuilt api-spec.json');
-    return JSON.parse(fs.readFileSync(swaggerJsonPath, 'utf-8')) as object;
-  }
-  throw new Error(
-    'Swagger documentation file not found. Please generate it first.'
-  );
-}
-
-const swaggerSpec = loadSwaggerSpec();
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
 
 function swaggerDocs(app: Express) {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

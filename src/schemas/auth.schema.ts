@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 /**
+ * @preserve
+ * @license
  * @swagger
  * components:
  *   schemas:
@@ -27,6 +29,8 @@ export const loginSchema = z.object({
 });
 
 /**
+ * @preserve
+ * @license
  * @swagger
  * components:
  *   schemas:
@@ -52,3 +56,19 @@ export const registerSchema = z.object({
     .string('Password is required')
     .min(6, 'Password must be at least 6 characters')
 });
+
+/**
+ * @preserve
+ * @license
+ * @swagger
+ * components:
+ *   schemas:
+ *    RefreshTokenSchema:
+ *      type: object
+ *      required:
+ *        - refreshToken
+ *      properties:
+ *        refreshToken:
+ *          type: string
+ *          description: User's refresh token.
+ */
