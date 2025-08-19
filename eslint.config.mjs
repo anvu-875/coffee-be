@@ -11,7 +11,6 @@ export default tseslint.config(
     'public',
     'deploy',
     'eslint.config.mjs',
-    'swagger-docs.json',
     'nodemon.json',
     'package.json',
     'package-lock.json',
@@ -39,7 +38,14 @@ export default tseslint.config(
       'prefer-const': 'off',
       'prefer-template': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': 'warn'
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
     }
   },
   {
