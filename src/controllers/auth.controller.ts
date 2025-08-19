@@ -122,7 +122,7 @@ export const refreshToken = catchAsync(async (req, res, next) => {
 
 export const logout = catchAsync(async (req, res, _next) => {
   try {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME] as string;
     if (refreshToken) {
       // Verify and delete session from Redis
       const payload = (await authService.verifyToken(refreshToken)) as {
