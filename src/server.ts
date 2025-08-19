@@ -13,6 +13,7 @@ import authRouter, { authRouteName } from './routes/auth.route';
 import prisma, { connectWithRetry } from './db/prisma';
 import logger from './utils/logger';
 import swaggerDocs from './swagger';
+import { checkRedisConnection } from './db/redis';
 
 const app = express();
 
@@ -78,34 +79,52 @@ app.all(/.*/, (req, _res, next) => {
 
 app.use(globalErrorHandler);
 
-// Connect to the database
+// 4) START SERVER
 const PORT = env.PORT;
 async function main() {
+  // Function for starting the server
   const establishApp = () => {
     app.listen(PORT, () => {
       logger.info(`Server is running at ${env.URL}`);
     });
   };
+
+  // Log the environment
   logger.info('Env currently running on: ' + env.NODE_ENV);
+
+  // Check Redis connection
   try {
-    logger.info('Checking database connection...');
+    console.log('🔍 Checking Redis connection...');
+    const isRedisHealthy = await checkRedisConnection();
+    if (isRedisHealthy) {
+      console.log('✅ Redis connection is healthy');
+    }
+  } catch (e) {
+    console.error('❌ Redis connection failed:', e);
+    process.exit(1);
+  }
+
+  // Check Prisma connection
+  try {
+    logger.info('🔍 Checking database connection...');
     await prisma.$queryRaw`SELECT 1`;
-    logger.info('Database connection is healthy');
+    logger.info('✅ Database connection is healthy');
     establishApp();
   } catch {
     try {
-      logger.info('Waiting for database connection...');
+      logger.info('🔄 Waiting for database connection...');
       await connectWithRetry();
-      logger.info('Connected to the database');
+      logger.info('✅ Connected to the database');
       establishApp();
     } catch (error) {
-      logger.info('Error connecting to the database:', error);
+      logger.info('❌ Error connecting to the database:', error);
       process.exit(1);
     }
   }
+
   // Clean shutdown
   process.on('SIGINT', async () => {
-    console.log('SIGINT received – disconnecting Prisma');
+    console.log('🔌 SIGINT received – disconnecting Prisma');
     await prisma.$disconnect();
     process.exit(0);
   });

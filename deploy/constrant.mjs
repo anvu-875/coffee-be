@@ -4,11 +4,12 @@
 export const EXTERNAL_DEPS = [
   'swagger-ui-express',
   'express',
-  '@prisma/client'
+  '@prisma/client',
+  '@upstash/redis'
 ];
 
 /**
- * Directory for the production build.
+ * Directory name for the production build.
  */
 export const PROD_DIR = 'dist';
 
