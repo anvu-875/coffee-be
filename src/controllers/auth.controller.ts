@@ -1,8 +1,5 @@
 import prisma from '@/db/prisma';
 import authService, {
-  ACCESS_COOKIE_OPTIONS,
-  ACCESS_TOKEN_COOKIE_NAME,
-  REFRESH_COOKIE_OPTIONS,
   REFRESH_TOKEN_COOKIE_NAME
 } from '@/services/auth.service';
 import catchAsync from '@/utils/catch-async';
@@ -31,8 +28,10 @@ export const login = catchAsync(async (req, res, next) => {
     await authService.generateTokens(user);
 
   // Set tokens in cookies
-  res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
-  res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+  authService.setCookies(res, {
+    accessToken,
+    refreshToken
+  });
 
   return res.status(StatusCodes.OK).json({
     accessToken,
@@ -56,8 +55,10 @@ export const register = catchAsync(async (req, res, next) => {
     await authService.generateTokens(user);
 
   // Set tokens in cookies
-  res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
-  res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+  authService.setCookies(res, {
+    accessToken,
+    refreshToken
+  });
 
   return res.status(StatusCodes.CREATED).json({
     accessToken,
@@ -68,26 +69,19 @@ export const register = catchAsync(async (req, res, next) => {
 });
 
 export const refreshToken = catchAsync(async (req, res, next) => {
-  const { refreshToken } = req.cookies;
+  const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME];
   if (!refreshToken) {
     return next(
-      new HttpError('Refresh token required.', StatusCodes.BAD_REQUEST)
+      new HttpError('Refresh token required.', StatusCodes.UNAUTHORIZED)
     );
   }
 
   try {
-    // Verify refresh token (RS256 + Redis publicKey lookup)
     const payload = await authService.verifyToken(refreshToken);
 
     if (payload.type !== 'refresh') {
-      return next(new HttpError('Invalid token type', StatusCodes.BAD_REQUEST));
-    }
-
-    // Ensure the session is still valid in Redis
-    const isValidSession = await authService.isSessionValid(payload.sessionId);
-    if (!isValidSession) {
       return next(
-        new HttpError('Session expired or invalid.', StatusCodes.UNAUTHORIZED)
+        new HttpError('Invalid refresh token', StatusCodes.UNAUTHORIZED)
       );
     }
 
@@ -96,51 +90,47 @@ export const refreshToken = catchAsync(async (req, res, next) => {
       return next(new HttpError('User not found.', StatusCodes.UNAUTHORIZED));
     }
 
-    // Generate new tokens for the same sessionId (rotation)
     const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
       await authService.rotateTokens(user, payload.sessionId);
 
-    // Set new tokens in cookies
-    res.cookie(ACCESS_TOKEN_COOKIE_NAME, newAccessToken, ACCESS_COOKIE_OPTIONS);
-    res.cookie(
-      REFRESH_TOKEN_COOKIE_NAME,
-      newRefreshToken,
-      REFRESH_COOKIE_OPTIONS
-    );
+    authService.setCookies(res, {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
 
     return res.status(StatusCodes.OK).json({
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
       sessionId: payload.sessionId
     });
-  } catch {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'TokenExpiredError') {
+      return next(
+        new HttpError('Refresh token expired', StatusCodes.UNAUTHORIZED)
+      );
+    }
+    if (err instanceof Error && err.name === 'JsonWebTokenError') {
+      return next(new HttpError('Invalid token', StatusCodes.UNAUTHORIZED));
+    }
+
+    console.error('Refresh API error:', err);
     return next(
-      new HttpError('Invalid refresh token.', StatusCodes.BAD_REQUEST)
+      new HttpError('Internal Server Error', StatusCodes.INTERNAL_SERVER_ERROR)
     );
   }
 });
 
 export const logout = catchAsync(async (req, res, _next) => {
-  try {
-    const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME] as string;
-    if (refreshToken) {
-      // Verify and delete session from Redis
-      const payload = (await authService.verifyToken(refreshToken)) as {
-        sessionId: string;
-        userId: string;
-        type: string;
-      };
-      if (payload.type === 'refresh') {
-        await authService.delSession(payload.sessionId);
-      }
-    }
-  } catch {
-    // Ignore errors on logout
+  if (!req.auth) {
+    throw new Error('No auth info found in request');
   }
 
+  const { sessionId } = req.auth;
+
+  await authService.delSession(sessionId);
+
   // Clear cookies
-  res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, ACCESS_COOKIE_OPTIONS);
-  res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
+  authService.clearCookies(res);
 
   return res
     .status(StatusCodes.OK)

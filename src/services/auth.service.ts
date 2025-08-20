@@ -2,28 +2,28 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto, { randomUUID } from 'crypto';
 import type { User } from '@prisma/client';
-import type { CookieOptions } from 'express';
+import type { CookieOptions, Response } from 'express';
 import env from '@/utils/env';
 import redis from '@/db/redis';
 
 // JWT config
 const JWT_EXPIRES_IN = '15m';
 export const ACCESS_TOKEN_COOKIE_NAME = 'tk_N3KhYmfkebDYJSgy8q7xLrFiWf6hNld1';
-export const ACCESS_COOKIE_OPTIONS: CookieOptions = {
+export const ACCESS_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
   sameSite: 'strict',
   maxAge: 1000 * 60 * 15 // 15 minutes
-};
+} satisfies CookieOptions;
 
 const REFRESH_EXPIRES_IN = '7d';
 export const REFRESH_TOKEN_COOKIE_NAME = 'tk_N2kVPQCuIotFZKkpHqkN3oTbv83SodSW';
-export const REFRESH_COOKIE_OPTIONS: CookieOptions = {
+export const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
   sameSite: 'strict',
   maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
-};
+} satisfies CookieOptions;
 
 class AuthService {
   private static instance: AuthService | null = null;
@@ -54,7 +54,7 @@ class AuthService {
 
     // Save publicKey in Redis, keyed by sessionId
     await redis.set(`session:${sessionId}`, publicKey, {
-      ex: 60 * 60 * 24 * 7 // 7 days
+      ex: REFRESH_COOKIE_OPTIONS.maxAge / 1000 // 7 days
     });
 
     // Create access token
@@ -82,7 +82,7 @@ class AuthService {
 
     // Update publicKey for the same sessionId in Redis
     await redis.set(`session:${sessionId}`, publicKey, {
-      ex: 60 * 60 * 24 * 7 // 7 days
+      ex: REFRESH_COOKIE_OPTIONS.maxAge / 1000 // 7 days
     });
 
     const accessToken = jwt.sign(
@@ -130,10 +130,38 @@ class AuthService {
     await redis.del(`session:${sessionId}`);
   }
 
+  /**
+   * Set cookies for access and refresh tokens
+   */
+  setCookies(
+    res: Response,
+    {
+      accessToken,
+      refreshToken
+    }: {
+      accessToken: string;
+      refreshToken: string;
+    }
+  ) {
+    res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+  }
+
+  clearCookies(res: Response) {
+    res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, ACCESS_COOKIE_OPTIONS);
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
+  }
+
+  /**
+   * Hash a password
+   */
   async hashPassword(password: string) {
     return await bcrypt.hash(password, 10);
   }
 
+  /**
+   * Compare a password with a hash
+   */
   async comparePassword(password: string, hash: string) {
     return await bcrypt.compare(password, hash);
   }

@@ -8,8 +8,9 @@ import {
 import {
   validateBody,
   validateRefreshCookies
-} from '@/middlewares/validate.middleware';
+} from '@/middlewares/validation.middleware';
 import { loginSchema, registerSchema } from '@/schemas/auth.schema';
+import { withAuth } from '@/middlewares/authorization.middleware';
 
 const router = Router();
 
@@ -67,12 +68,6 @@ router.post('/register', validateBody(registerSchema), register);
  *     summary: Refresh access token
  *     tags:
  *       - Auth
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/RefreshTokenSchema'
  *     responses:
  *       200:
  *         description: Token refreshed
@@ -95,6 +90,6 @@ router.post('/refresh', validateRefreshCookies, refreshToken);
  *       401:
  *         description: Unauthorized
  */
-router.post('/logout', validateRefreshCookies, logout);
+router.post('/logout', withAuth, logout);
 
 export default router;
