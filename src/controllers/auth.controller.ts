@@ -1,8 +1,5 @@
 import prisma from '@/db/prisma';
 import authService, {
-  ACCESS_COOKIE_OPTIONS,
-  ACCESS_TOKEN_COOKIE_NAME,
-  REFRESH_COOKIE_OPTIONS,
   REFRESH_TOKEN_COOKIE_NAME
 } from '@/services/auth.service';
 import catchAsync from '@/utils/catch-async';
@@ -10,29 +7,22 @@ import HttpError from '@/utils/http-error';
 import userService from '@/services/user.service';
 import { StatusCodes } from '@/utils/http-enum';
 
-export const login = catchAsync(async (req, res, next) => {
+export const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
   const user = await userService.findUserByEmail(email);
   if (!user) {
-    return next(
-      new HttpError('Wrong email or password.', StatusCodes.UNAUTHORIZED)
-    );
+    throw new HttpError('Wrong email or password.', StatusCodes.UNAUTHORIZED);
   }
 
   const valid = await authService.comparePassword(password, user.passwordHash);
   if (!valid) {
-    return next(
-      new HttpError('Wrong email or password.', StatusCodes.UNAUTHORIZED)
-    );
+    throw new HttpError('Wrong email or password.', StatusCodes.UNAUTHORIZED);
   }
 
-  // Generate access + refresh token (with sessionId saved in Redis)
   const { accessToken, refreshToken, sessionId } =
     await authService.generateTokens(user);
 
-  // Set tokens in cookies
-  res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
-  res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+  authService.setCookies(res, { accessToken, refreshToken });
 
   return res.status(StatusCodes.OK).json({
     accessToken,
@@ -42,11 +32,11 @@ export const login = catchAsync(async (req, res, next) => {
   });
 });
 
-export const register = catchAsync(async (req, res, next) => {
+export const register = catchAsync(async (req, res) => {
   const { email, password } = req.body;
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return next(new HttpError('Email already in use.', StatusCodes.CONFLICT));
+    throw new HttpError('Email already in use.', StatusCodes.CONFLICT);
   }
 
   const hashed = await authService.hashPassword(password);
@@ -55,9 +45,7 @@ export const register = catchAsync(async (req, res, next) => {
   const { accessToken, refreshToken, sessionId } =
     await authService.generateTokens(user);
 
-  // Set tokens in cookies
-  res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
-  res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+  authService.setCookies(res, { accessToken, refreshToken });
 
   return res.status(StatusCodes.CREATED).json({
     accessToken,
@@ -67,82 +55,46 @@ export const register = catchAsync(async (req, res, next) => {
   });
 });
 
-export const refreshToken = catchAsync(async (req, res, next) => {
-  const { refreshToken } = req.cookies;
-  if (!refreshToken) {
-    return next(
-      new HttpError('Refresh token required.', StatusCodes.BAD_REQUEST)
-    );
+export const refreshToken = catchAsync(async (req, res) => {
+  const token = req.cookies[REFRESH_TOKEN_COOKIE_NAME];
+  if (!token) {
+    throw new HttpError('Refresh token required.', StatusCodes.UNAUTHORIZED);
   }
 
-  try {
-    // Verify refresh token (RS256 + Redis publicKey lookup)
-    const payload = await authService.verifyToken(refreshToken);
-
-    if (payload.type !== 'refresh') {
-      return next(new HttpError('Invalid token type', StatusCodes.BAD_REQUEST));
-    }
-
-    // Ensure the session is still valid in Redis
-    const isValidSession = await authService.isSessionValid(payload.sessionId);
-    if (!isValidSession) {
-      return next(
-        new HttpError('Session expired or invalid.', StatusCodes.UNAUTHORIZED)
-      );
-    }
-
-    const user = await userService.findUserById(payload.userId);
-    if (!user) {
-      return next(new HttpError('User not found.', StatusCodes.UNAUTHORIZED));
-    }
-
-    // Generate new tokens for the same sessionId (rotation)
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-      await authService.rotateTokens(user, payload.sessionId);
-
-    // Set new tokens in cookies
-    res.cookie(ACCESS_TOKEN_COOKIE_NAME, newAccessToken, ACCESS_COOKIE_OPTIONS);
-    res.cookie(
-      REFRESH_TOKEN_COOKIE_NAME,
-      newRefreshToken,
-      REFRESH_COOKIE_OPTIONS
-    );
-
-    return res.status(StatusCodes.OK).json({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-      sessionId: payload.sessionId
-    });
-  } catch {
-    return next(
-      new HttpError('Invalid refresh token.', StatusCodes.BAD_REQUEST)
-    );
+  const payload = await authService.verifyToken(token, 'refresh');
+  const user = await userService.findUserById(payload.userId);
+  if (!user) {
+    throw new HttpError('User not found.', StatusCodes.UNAUTHORIZED);
   }
+
+  const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+    await authService.rotateTokens(user, payload.sessionId);
+
+  authService.setCookies(res, {
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken
+  });
+
+  return res.status(StatusCodes.OK).json({
+    accessToken: newAccessToken,
+    refreshToken: newRefreshToken,
+    sessionId: payload.sessionId
+  });
 });
 
-export const logout = catchAsync(async (req, res, _next) => {
-  try {
-    const refreshToken = req.cookies[REFRESH_TOKEN_COOKIE_NAME] as string;
-    if (refreshToken) {
-      // Verify and delete session from Redis
-      const payload = (await authService.verifyToken(refreshToken)) as {
-        sessionId: string;
-        userId: string;
-        type: string;
-      };
-      if (payload.type === 'refresh') {
-        await authService.delSession(payload.sessionId);
-      }
-    }
-  } catch {
-    // Ignore errors on logout
+export const logout = catchAsync(async (req, res) => {
+  if (!req.auth) {
+    throw new HttpError(
+      'No auth info found in request',
+      StatusCodes.UNAUTHORIZED
+    );
   }
 
-  // Clear cookies
-  res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, ACCESS_COOKIE_OPTIONS);
-  res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
+  await authService.delSession(req.auth.sessionId);
 
-  return res
-    .status(StatusCodes.OK)
-    .json({ message: 'Logged out successfully.' });
+  authService.clearCookies(res);
+
+  return res.status(StatusCodes.OK).json({
+    message: 'Logged out successfully.'
+  });
 });

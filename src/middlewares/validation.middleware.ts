@@ -70,16 +70,16 @@ export const validateCookies =
     next();
   };
 
-const authsTokenSchema = z.object({
+const authorizationSchema = z.object({
   [ACCESS_TOKEN_COOKIE_NAME]: z.string('Access token is required'),
   [REFRESH_TOKEN_COOKIE_NAME]: z.string('Refresh token is required')
 });
-export const validateAuthCookies = (
+export const authorizeCookies = (
   req: Request,
   _res: Response,
   next: NextFunction
 ) => {
-  const result = authsTokenSchema.safeParse(req.cookies);
+  const result = authorizationSchema.safeParse(req.cookies);
   if (!result.success) {
     const error = flattenError(result.error);
     const resError: { accessToken?: string[]; refreshToken?: string[] } = {};
