@@ -98,9 +98,7 @@ export enum ServerError {
   NETWORK_AUTHENTICATION_REQUIRED = 511
 }
 
-/**
- * Combined status codes object for easy access.
- */
+// Combined status codes object for easy access.
 export const StatusCodes = {
   ...Informational,
   ...Success,
