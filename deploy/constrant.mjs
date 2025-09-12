@@ -2,10 +2,10 @@
  * List of external dependencies to include in the final build.
  */
 export const EXTERNAL_DEPS = [
-  'swagger-ui-express',
-  'express',
-  '@prisma/client',
-  '@upstash/redis'
+  'swagger-ui-express@5.0.1',
+  'express@5.1.0',
+  '@prisma/client@6.14.0',
+  '@upstash/redis@1.35.3'
 ];
 
 /**
