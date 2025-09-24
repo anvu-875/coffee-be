@@ -3,20 +3,22 @@ import bcrypt from 'bcryptjs';
 import crypto, { randomUUID } from 'crypto';
 import type { User } from '@prisma/client';
 import type { CookieOptions, Response } from 'express';
-import env from '@/utils/env';
 import redis from '@/db/redis';
 
 // =====================
 // JWT config
 // =====================
-const JWT_EXPIRES_IN = '15m';
-export const ACCESS_TOKEN_COOKIE_NAME = 'tk_N3KhYmfkebDYJSgy8q7xLrFiWf6hNld1';
-export const ACCESS_COOKIE_OPTIONS = {
+const ACCESS_EXPIRES_IN = '15m';
+
+const REFRESH_EXPIRES_IN = '7d';
+export const REFRESH_TOKEN_COOKIE_NAME = 'tk_N2kVPQCuIotFZKkpHqkN3oTbv83SodSW';
+export const REFRESH_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
-  secure: env.NODE_ENV === 'production',
+  secure: true,
   sameSite: 'strict',
-  maxAge: 1000 * 60 * 15 // 15 minutes
-} satisfies CookieOptions;
+  priority: 'high',
+  maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+};
 
 interface AccessTokenPayload {
   userId: string;
@@ -24,15 +26,6 @@ interface AccessTokenPayload {
   sessionId: string;
   type: 'access';
 }
-
-const REFRESH_EXPIRES_IN = '7d';
-export const REFRESH_TOKEN_COOKIE_NAME = 'tk_N2kVPQCuIotFZKkpHqkN3oTbv83SodSW';
-export const REFRESH_COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
-} satisfies CookieOptions;
 
 interface RefreshTokenPayload {
   userId: string;
@@ -54,7 +47,7 @@ export enum AuthErrorCode {
 
 export class AuthError extends Error {
   constructor(
-    message: string,
+    public message: string,
     public code: AuthErrorCode
   ) {
     super(message);
@@ -92,14 +85,15 @@ class AuthService {
     const { privateKey, publicKey } = this.generateKeyPair();
     const sessionId = randomUUID();
 
+    // Store public key in redis so we can verify later.
     await redis.set(`session:${sessionId}`, publicKey, {
-      ex: REFRESH_COOKIE_OPTIONS.maxAge / 1000
+      ex: Math.floor((REFRESH_COOKIE_OPTIONS.maxAge ?? 0) / 1000)
     });
 
     const accessToken = jwt.sign(
       { userId: user.id, email: user.email, sessionId, type: 'access' },
       privateKey,
-      { algorithm: 'RS256', expiresIn: JWT_EXPIRES_IN }
+      { algorithm: 'RS256', expiresIn: ACCESS_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
@@ -113,12 +107,14 @@ class AuthService {
 
   /**
    * Rotate tokens for an existing session (refresh flow)
+   * This re-generates a new key pair and overwrites the public key in redis
+   * for the same sessionId so previously issued tokens are no longer valid.
    */
   async rotateTokens(user: User, sessionId: string) {
     const { privateKey, publicKey } = this.generateKeyPair();
 
     await redis.set(`session:${sessionId}`, publicKey, {
-      ex: REFRESH_COOKIE_OPTIONS.maxAge / 1000
+      ex: Math.floor((REFRESH_COOKIE_OPTIONS.maxAge ?? 0) / 1000)
     });
 
     const accessToken = jwt.sign(
@@ -129,7 +125,7 @@ class AuthService {
         type: 'access'
       } as AccessTokenPayload,
       privateKey,
-      { algorithm: 'RS256', expiresIn: JWT_EXPIRES_IN }
+      { algorithm: 'RS256', expiresIn: ACCESS_EXPIRES_IN }
     );
 
     const refreshToken = jwt.sign(
@@ -142,17 +138,8 @@ class AuthService {
   }
 
   /**
-   * Verify token
+   * Verify token: decode -> fetch publicKey from redis -> verify signature
    */
-  async verifyToken(
-    token: string,
-    type?: 'access' | 'refresh'
-  ): Promise<{ userId: string; sessionId: string; type: 'access' | 'refresh' }>;
-  async verifyToken(token: string, type: 'access'): Promise<AccessTokenPayload>;
-  async verifyToken(
-    token: string,
-    type: 'refresh'
-  ): Promise<RefreshTokenPayload>;
   async verifyToken(token: string, type?: 'access' | 'refresh') {
     const decoded = jwt.decode(token) as
       | AccessTokenPayload
@@ -162,7 +149,7 @@ class AuthService {
       !decoded?.sessionId ||
       !decoded?.userId ||
       (decoded.type !== 'access' && decoded.type !== 'refresh') ||
-      (decoded.type === 'access' && !decoded.email)
+      (decoded.type === 'access' && !(decoded as AccessTokenPayload).email)
     ) {
       throw new AuthError(
         'Invalid token payload',
@@ -186,9 +173,9 @@ class AuthService {
     }
 
     try {
-      return jwt.verify(token, publicKey, {
-        algorithms: ['RS256']
-      }) as { userId: string; sessionId: string; type: 'access' | 'refresh' };
+      return jwt.verify(token, publicKey, { algorithms: ['RS256'] }) as
+        | AccessTokenPayload
+        | RefreshTokenPayload;
     } catch (err: unknown) {
       if (err instanceof jwt.TokenExpiredError) {
         throw new AuthError('Token expired', AuthErrorCode.TOKEN_EXPIRED);
@@ -220,18 +207,20 @@ class AuthService {
 
   /**
    * Cookie helpers
+   * - setRefreshCookie: sets only the refresh token cookie (HTTPOnly)
+   * - clearRefreshCookie: clears the refresh cookie (must match path)
    */
-  setCookies(
-    res: Response,
-    { accessToken, refreshToken }: { accessToken: string; refreshToken: string }
-  ) {
-    res.cookie(ACCESS_TOKEN_COOKIE_NAME, accessToken, ACCESS_COOKIE_OPTIONS);
-    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);
+  setRefreshCookie(res: Response, refreshToken: string) {
+    const opts: CookieOptions = {
+      ...REFRESH_COOKIE_OPTIONS,
+      path: '/api/auth/refresh'
+    };
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, opts);
   }
 
-  clearCookies(res: Response) {
-    res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, ACCESS_COOKIE_OPTIONS);
-    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, REFRESH_COOKIE_OPTIONS);
+  clearRefreshCookie(res: Response) {
+    // clearCookie must match same path used when setting
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, { path: '/api/auth/refresh' });
   }
 
   /**

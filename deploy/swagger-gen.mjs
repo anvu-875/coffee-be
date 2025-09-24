@@ -13,6 +13,15 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'API documentation for the Coffee Shop backend'
     },
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer'
+        }
+      }
+    },
+    security: [{ BearerAuth: [] }],
     servers: [
       {
         url: `${process.env.URL}/api`
