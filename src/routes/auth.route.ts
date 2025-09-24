@@ -5,10 +5,7 @@ import {
   refreshToken,
   logout
 } from '@/controllers/auth.controller';
-import {
-  validateBody,
-  validateRefreshCookies
-} from '@/middlewares/validation.middleware';
+import { validateBody } from '@/middlewares/validation.middleware';
 import { loginSchema, registerSchema } from '@/schemas/auth.schema';
 import { withAuth } from '@/middlewares/authorization.middleware';
 
@@ -74,7 +71,7 @@ router.post('/register', validateBody(registerSchema), register);
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/refresh', validateRefreshCookies, refreshToken);
+router.post('/refresh', refreshToken);
 
 /**
  * @preserve
@@ -91,5 +88,26 @@ router.post('/refresh', validateRefreshCookies, refreshToken);
  *         description: Unauthorized
  */
 router.post('/logout', withAuth, logout);
+
+//test auth route
+/**
+ * @preserve
+ * @openapi
+ * /auth/test:
+ *  get:
+ *    summary: Test authentication
+ *    tags:
+ *      - Auth
+ *    security:
+ *      - BearerAuth: []
+ *    responses:
+ *      200:
+ *        description: You are authenticated
+ *      401:
+ *        description: Unauthorized
+ */
+router.get('/test', withAuth, (req, res) => {
+  res.json({ message: 'You are authenticated', user: req.auth?.user });
+});
 
 export default router;

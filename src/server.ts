@@ -20,7 +20,14 @@ const app = express();
 // 1) GLOBAL MIDDLEWARES
 // set security HTTP headers
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+    optionsSuccessStatus: 200,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
+  })
+);
 
 app.use(morgan('common')); // log requests to the console
 
