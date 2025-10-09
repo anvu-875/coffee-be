@@ -5,7 +5,7 @@ export const EXTERNAL_DEPS = [
   'swagger-ui-express@5.0.1',
   'express@5.1.0',
   '@prisma/client@6.14.0',
-  '@upstash/redis@1.35.3'
+  'redis@5.8.3'
 ];
 
 /**

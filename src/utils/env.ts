@@ -7,8 +7,7 @@ dotenv.config();
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production']),
   POSTGRESQL_DATABASE_URL: z.url(),
-  UPSTASH_REDIS_REST_URL: z.url(),
-  UPSTASH_REDIS_REST_TOKEN: z.string(),
+  REDIS_URL: z.url(),
   PORT: z
     .string()
     .transform(Number)
