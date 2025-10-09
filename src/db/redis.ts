@@ -1,17 +1,28 @@
-import { Redis } from '@upstash/redis';
+import env from '@/utils/env';
+import { createClient } from 'redis';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN
+const redis = createClient({
+  url: env.REDIS_URL
 });
 
+redis.on('error', (err) => {
+  console.error('Redis client error', err);
+});
+
+(async () => {
+  await redis.connect();
+})();
+
+/**
+ * Check Redis connection by sending a PING command.
+ * Throws an error if the connection fails or the response is unexpected.
+ */
 export async function checkRedisConnection(): Promise<boolean> {
   try {
     const pong = await redis.ping();
     if (pong === 'PONG') {
       return true;
     }
-    //add icon
     throw new Error(`❌ Unexpected Redis response: ${pong}`);
   } catch (err) {
     throw new Error(`❌ Redis connection failed: ${err}`);

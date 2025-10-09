@@ -1,5 +1,3 @@
-// ---------- file: authMiddleware.ts ----------
-
 import { REFRESH_TOKEN_COOKIE_NAME, AuthError } from '@/services/auth.service';
 import authService from '@/services/auth.service';
 import { StatusCodes } from '@/utils/http-enum';
